@@ -1,0 +1,33 @@
+{
+  "name": "proyecto-carnet-digital",
+  "version": "1.0.0",
+  "description": "Monorepo de microservicios NestJS para Carnet Digital",
+  "packageManager": "pnpm@10.9.0",
+  "workspaces": [
+    "api-gateway",
+    "auth-service",
+    "catalog-service",
+    "user-service"
+  ],
+  "scripts": {
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build",
+    "dev:db": "docker-compose up postgres-catalog postgres-user redis",
+
+    "prisma:generate": "pnpm -r --filter catalog-service prisma generate && pnpm -r --filter user-service prisma generate",
+    "prisma:migrate": "pnpm -r --filter catalog-service prisma migrate dev && pnpm -r --filter user-service prisma migrate dev",
+    "prisma:migrate:reset": "pnpm -r --filter catalog-service prisma migrate reset --force && pnpm -r --filter user-service prisma migrate reset --force",
+    "prisma:studio:catalog": "pnpm --filter catalog-service prisma studio",
+    "prisma:studio:user": "pnpm --filter user-service prisma studio",
+    
+    "start:all:dev": "pnpm -r run start:dev",
+    "start:gateway": "pnpm --filter api-gateway run start:dev",
+    "start:auth": "pnpm --filter auth-service run start:dev",
+    "start:catalog": "pnpm --filter catalog-service run start:dev",
+    "start:user": "pnpm --filter user-service run start:dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

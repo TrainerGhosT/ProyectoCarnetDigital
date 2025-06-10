@@ -1,0 +1,14 @@
+packages:
+  - api-gateway
+  - auth-service
+  - catalog-service
+  - user-service
+
+ignoredBuiltDependencies:
+  - '@scarf/scarf'
+
+onlyBuiltDependencies:
+  - '@nestjs/core'
+  - '@prisma/client'
+  - '@prisma/engines'
+  - prisma

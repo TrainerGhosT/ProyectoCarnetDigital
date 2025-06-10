@@ -1,0 +1,34 @@
+FROM node:22-alpine
+
+# 1) Definimos el WORKDIR dentro del contenedor
+WORKDIR /app
+
+# 2) Copiamos solo lo necesario para instalar dependencias (evitar recargar capa)
+#    Importante: el contexto de build será la raíz del monorepo,
+#    pero aquí vamos a copiar los package.json del catálogo y del workspace.
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+
+# 3) Copiamos el package.json específico de auth-service
+COPY auth-service/package.json auth-service/tsconfig.json ./auth-service/
+
+# 4) Instalar pnpm y dependencias
+RUN npm install -g pnpm
+# Ahora instalamos todos los workspaces (incluye auth-service)
+RUN pnpm install --frozen-lockfile --filter "auth-service"
+
+# 5) Copiamos el resto del código de auth-service
+COPY auth-service/ ./auth-service/
+
+# 6) Generar Prisma Client y compilar TypeScript dentro del subdirectorio
+WORKDIR /app/auth-service
+#RUN pnpm prisma generate
+
+RUN pnpm install --filter "auth-service" --save-dev @nestjs/cli
+RUN pnpm build
+
+# 7) Exponer puerto
+EXPOSE 3002
+
+# 8) Comando final:
+#    Primero aplicamos migraciones (deploy), luego levantamos la app en modo producción
+CMD ["nest", "start", "--watch"]

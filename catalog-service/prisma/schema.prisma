@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Carreras {
+  idCarrera Int    @id @default(autoincrement())
+  nombre    String @unique @db.VarChar(50)
+  director  String @db.VarChar(100)
+  email     String @unique @db.VarChar(100)
+  telefono  String @db.VarChar(20)
+
+  @@map("carreras")
+}
+
+model TipoUsuario {
+  idTipoUsuario Int    @id @default(autoincrement())
+  nombre        String @unique @db.VarChar(50)
+
+  @@map("tipos_usuario")
+}
+
+model TipoIdentificacion {
+  idTipoIdentificacion Int    @id @default(autoincrement())
+  nombre               String @unique @db.VarChar(50)
+
+  @@map("tipos_identificacion")
+}
+
+model Estados {
+  idEstado Int    @id @default(autoincrement())
+  nombre   String @unique @default("activo") @db.VarChar(50)
+
+  @@map("estados_usuario")
+}
+
+model Areas {
+  idArea Int    @id @default(autoincrement())
+  nombre String @unique @db.VarChar(50)
+
+  @@map("areas_trabajo")
+}

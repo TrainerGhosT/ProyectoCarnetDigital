@@ -1,0 +1,63 @@
+version: '3.9'
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./api-gateway:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - auth-service
+      - catalog-service
+      - user-service
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile.dev
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./auth-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+
+  catalog-service:
+    build:
+      context: .
+      dockerfile: catalog-service/Dockerfile.dev
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./catalog-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-catalog:5432/catalog_db
+    depends_on:
+      - postgres-catalog
+
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile.dev
+    ports:
+      - "3003:3003"
+    volumes:
+      - ./user-service:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-user:5433/user_db
+    depends_on:
+      - postgres-user

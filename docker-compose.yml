@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  postgres-catalog:
+    image: postgres:17
+    container_name: carnet-postgres-catalog
+    environment:
+      POSTGRES_HOST: localhost
+      POSTGRES_DB: catalog_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_catalog_data:/var/lib/postgresql/data
+
+  postgres-user:
+    image: postgres:17
+    container_name: carnet-postgres-user
+    environment:
+      POSTGRES_HOST: localhost
+      POSTGRES_DB: user_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: carnet-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_catalog_data:
+  postgres_user_data:
+  redis_data:

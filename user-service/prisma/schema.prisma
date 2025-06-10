@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuarios {
+  idUsuario          String @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  correo             String @unique @db.VarChar(100)
+  tipoIdentificacion Int    @map("id_TipoIdentificacion") @db.Integer()
+  identificacion     String @db.VarChar(50)
+  nombreCompleto     String @db.VarChar(100)
+  contrasena         String @db.VarChar(255)
+  tipoUsuario        Int    @map("id_TipoUsuario") @db.Integer()
+  estadoUsuario      Int    @default(1) @map("id_EstadoUsuario") @db.Integer()
+
+  carreras UsuarioCarreras[]
+
+  areas UsuarioAreas[]
+
+  telefonos UsuarioTelefonos[]
+
+  fotografia UsuarioFotografia?
+
+  qr UsuarioQr?
+
+  @@id([idUsuario])
+  @@map("usuarios")
+}
+
+model UsuarioTelefonos {
+  idTelefono Int    @id @default(autoincrement())
+  usuario    String @map("id_Usuario") @db.Uuid
+  numero     String @unique @db.VarChar(20)
+  tipo       Int    @db.Integer()
+
+// relations
+  usuarioTelefono Usuarios @relation(fields: [usuario], references: [idUsuario], onDelete: Cascade)
+
+  @@map("usuario_telefonos")
+}
+
+model UsuarioCarreras {
+  usuario String @map("id_Usuario") @db.Uuid
+  carrera Int    @map("id_Carrera") @db.Integer()
+
+  // relations
+  usuarioCarerra Usuarios @relation(fields: [usuario], references: [idUsuario], onDelete: Cascade)
+
+  @@id([usuario, carrera])
+  @@map("usuario_carreras")
+}
+
+model UsuarioAreas {
+  usuario String @map("id_Usuario") @db.Uuid
+  area    Int    @map("id_Area") @db.Integer()
+
+  // relations
+  usuarioArea Usuarios @relation(fields: [usuario], references: [idUsuario], onDelete: Cascade)
+
+  @@id([usuario, area])
+  @@map("usuario_areas")
+}
+
+model UsuarioFotografia {
+  idUsuarioFotografia Int      @id @default(autoincrement())
+  usuario             String   @unique @map("id_Usuario") @db.Uuid
+  fotoBase64          String   @db.Text
+  fechaSubida         DateTime @default(now())
+
+  // relations
+
+  usuarioFotografia Usuarios @relation(fields: [usuario], references: [idUsuario], onDelete: Cascade)
+
+  @@map("usuario_fotografia")
+}
+
+model UsuarioQr {
+  idUsuarioQr     Int      @id @default(autoincrement())
+  usuario         String   @unique @map("id_Usuario") @db.Uuid
+  qrBase64        String   @db.Text
+  fechaVencimento DateTime @map("fecha_vencimiento")
+
+  usuarioQr Usuarios @relation(fields: [usuario], references: [idUsuario], onDelete: Cascade)
+
+  @@map("usuario_qr")
+}
