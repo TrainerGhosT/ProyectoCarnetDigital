@@ -9,7 +9,7 @@ CREATE TABLE "usuarios" (
     "id_TipoUsuario" INTEGER NOT NULL,
     "id_EstadoUsuario" INTEGER NOT NULL DEFAULT 1,
 
-    CONSTRAINT "usuarios_pkey" PRIMARY KEY ("idUsuario")
+    CONSTRAINT "usuarios_pkey" PRIMARY KEY ("idUsuario","correo")
 );
 
 -- CreateTable
@@ -57,6 +57,9 @@ CREATE TABLE "usuario_qr" (
 
     CONSTRAINT "usuario_qr_pkey" PRIMARY KEY ("idUsuarioQr")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "usuarios_idUsuario_key" ON "usuarios"("idUsuario");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "usuarios_correo_key" ON "usuarios"("correo");

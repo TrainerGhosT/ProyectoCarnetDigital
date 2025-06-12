@@ -15,7 +15,7 @@ datasource db {
 }
 
 model Usuarios {
-  idUsuario          String @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  idUsuario          String @default(dbgenerated("gen_random_uuid()")) @db.Uuid @unique
   correo             String @unique @db.VarChar(100)
   tipoIdentificacion Int    @map("id_TipoIdentificacion") @db.Integer()
   identificacion     String @db.VarChar(50)
@@ -34,7 +34,7 @@ model Usuarios {
 
   qr UsuarioQr?
 
-  @@id([idUsuario])
+  @@id([idUsuario, correo])
   @@map("usuarios")
 }
 
