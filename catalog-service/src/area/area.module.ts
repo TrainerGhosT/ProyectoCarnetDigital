@@ -6,6 +6,6 @@ import { PrismaService } from '../shared/services/prisma.service';
 @Module({
   controllers: [AreaController],
   providers: [AreaService, PrismaService],
-  exports: [AreaService]
+  exports: [AreaService],
 })
 export class AreaModule {}

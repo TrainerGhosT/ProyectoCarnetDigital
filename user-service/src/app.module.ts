@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { HttpModule } from '@nestjs/axios';
 import { QrModule } from './qr/qr.module';
+import { UsuarioModule } from './usuario/usuario.module';
+import { PrismaModule } from 'src/prisma.module';
 
 @Module({
   imports: [
@@ -13,7 +15,9 @@ import { QrModule } from './qr/qr.module';
       timeout: 10000,
       maxRedirects: 5,
     }),
+    UsuarioModule,
     QrModule,
+    PrismaModule
   ],
 })
 export class AppModule {}

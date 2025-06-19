@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { HttpModule } from '@nestjs/axios';
 import { QrController } from './qr.controller';
 import { QrService } from './qr.service';
-import { AuthGuard } from './auth.guard';
+import { JwtAuthGuard } from '../common/jwt-auth.guard';
+ 
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { AuthGuard } from './auth.guard';
     }),
   ],
   controllers: [QrController],
-  providers: [QrService, AuthGuard],
+  providers: [QrService, JwtAuthGuard],
   exports: [QrService],
 })
 export class QrModule {}

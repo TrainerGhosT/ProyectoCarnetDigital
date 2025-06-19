@@ -6,6 +6,7 @@ packages:
 
 ignoredBuiltDependencies:
   - '@scarf/scarf'
+  - bcrypt
 
 onlyBuiltDependencies:
   - '@nestjs/core'

@@ -95,6 +95,9 @@ export class QrService {
 
   /**
    * Obtiene los datos del usuario desde el User Service
+   * TODO: Cambiar por que es innecesario ya que se puede usar prisma obtenerlo por que 
+   * la entidad Qr y Usuario conviven en el mismo proyecto o servicio.
+   * Hay que conectar desde http los datos que estan en otros servicios como catalog-service
    */
   private async getUserData(identificacion: string): Promise<UserData> {
     try {

@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,9 +21,19 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
+  // Configuración de Swagger
+  const config = new DocumentBuilder()
+    .setTitle('Auth Service API')
+    .setDescription('Servicio de autenticación para Carnet Digital')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, document);
 
   const port = configService.get<number>('PORT', 3004);
   await app.listen(port);
-  console.log(`QR Service is running on port ${port}`);
+  console.log(`* User Service is running on port ${port}`);
 }
 bootstrap();

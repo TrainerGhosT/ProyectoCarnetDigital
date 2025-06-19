@@ -7,14 +7,14 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
+  //UseGuards,
   HttpStatus,
   HttpException,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { UsuarioService } from './usuario.service';
-import { AuthGuard } from './auth.guard';
+//import { AuthGuard } from './auth.guard';
 
 
 import { FiltrarUsuarioDto } from './dto/filtrar-usuario.dto';
@@ -23,8 +23,8 @@ import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 
 @ApiTags('Usuario')
 @Controller('usuario')
-@UseGuards(AuthGuard)
-@ApiBearerAuth()
+
+
 export class UsuarioController {
   constructor(private readonly usuarioService: UsuarioService) {}
 
@@ -45,7 +45,7 @@ export class UsuarioController {
     } catch (error) {
       if (error.code === 'P2002') {
         throw new HttpException(
-          'El email ya está registrado',
+          'El tipo de usuario o alguno de los datos ya se encuentran registrados', 
           HttpStatus.CONFLICT,
         );
       }
@@ -90,14 +90,15 @@ export class UsuarioController {
   @ApiQuery({ name: 'tipo', required: false, description: 'Filtrar por tipo de usuario' })
   @ApiResponse({ status: 200, description: 'Lista de usuarios obtenida exitosamente' })
   @ApiResponse({ status: 401, description: 'Token inválido' })
-  async obtenerUsuarios(@Query() filtros: FiltrarUsuarioDto) {
+  async obtenerUsuariosFiltrados(@Query() filtros: FiltrarUsuarioDto) {
     const usuarios = await this.usuarioService.obtenerUsuarios(filtros);
     return {
       status: 'success',
-      message: 'Usuarios obtenidos exitosamente',
+      message: 'Usuarios filtrados obtenidos exitosamente',
       data: usuarios,
     };
   }
+
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un usuario por ID' })

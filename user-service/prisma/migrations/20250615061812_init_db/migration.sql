@@ -17,7 +17,6 @@ CREATE TABLE "usuario_telefonos" (
     "idTelefono" SERIAL NOT NULL,
     "id_Usuario" UUID NOT NULL,
     "numero" VARCHAR(20) NOT NULL,
-    "tipo" INTEGER NOT NULL,
 
     CONSTRAINT "usuario_telefonos_pkey" PRIMARY KEY ("idTelefono")
 );

@@ -1,8 +1,27 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { HttpModule } from '@nestjs/axios';
+
+import { CarreraModule } from './carrera/carrera.module';
+import { AreaModule } from './area/area.module'
+import { TiposUsuarioModule } from './tipo-usuario/tipo-usuario.module';
+import { TiposIdentificacionModule } from './tipo-identificacion/tipo-identificacion.module';
+
 
 @Module({
-  imports: [],
-  controllers: [],
-  providers: [],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+    HttpModule.register({
+      timeout: 10000,
+      maxRedirects: 5,
+    }),
+    TiposUsuarioModule,
+    TiposIdentificacionModule,
+    AreaModule,
+    CarreraModule
+  ],
 })
 export class AppModule {}

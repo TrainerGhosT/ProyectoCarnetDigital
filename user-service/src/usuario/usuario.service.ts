@@ -1,7 +1,7 @@
 import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { PrismaService } from '../../prisma/prisma.service';
+import { PrismaService } from '../common/prisma.service';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
 import { FiltrarUsuarioDto } from './dto/filtrar-usuario.dto';
@@ -87,7 +87,6 @@ export class UsuarioService {
             data: crearUsuarioDto.telefonos.map((telefono) => ({
               usuario: nuevoUsuario.idUsuario,
               numero: telefono.numero,
-              tipo: telefono.tipo,
             })),
           });
         }
@@ -203,7 +202,6 @@ export class UsuarioService {
               data: actualizarUsuarioDto.telefonos.map((telefono) => ({
                 usuario: id,
                 numero: telefono.numero,
-                tipo: telefono.tipo,
               })),
             });
           }
@@ -284,7 +282,6 @@ export class UsuarioService {
         telefonos: {
           select: {
             numero: true,
-            tipo: true,
           },
         },
       },
@@ -327,7 +324,6 @@ export class UsuarioService {
         telefonos: {
           select: {
             numero: true,
-            tipo: true,
           },
         },
       },
@@ -376,48 +372,55 @@ export class UsuarioService {
   }
 
   private async validarTiposEnCatalog(
-    tipoUsuario: number,
-    tipoIdentificacion: number,
+    idtipoUsuario: number,
+    idtipoIdentificacion: number,
   ) {
     try {
       // Validar tipo de usuario
       await firstValueFrom(
         this.httpService.get(
-          `${this.catalogServiceUrl}/tiposusuario/${tipoUsuario}`,
+          `${this.catalogServiceUrl}/tiposusuario/${idtipoUsuario}`,
         ),
       );
 
       // Validar tipo de identificación
       await firstValueFrom(
         this.httpService.get(
-          `${this.catalogServiceUrl}/tiposidentificacion/${tipoIdentificacion}`,
+          `${this.catalogServiceUrl}/tiposidentificacion/${idtipoIdentificacion}`,
         ),
       );
     } catch (error) {
       this.logger.error('Error al validar tipos en catalog-service', error);
       throw new HttpException(
-        'Tipo de usuario o identificación inválido',
+        'Tipo de usuario o Tipo de identificación inválido',
         HttpStatus.BAD_REQUEST,
       );
     }
   }
 
   private async validarCarrerasOAreas(crearUsuarioDto: CrearUsuarioDto) {
-    // Si es estudiante (tipo 1), debe tener carreras
-    if (crearUsuarioDto.tipoUsuario === 1) {
-      if (!crearUsuarioDto.carreras || crearUsuarioDto.carreras.length === 0) {
+    const { tipoUsuario, carreras, areas } = crearUsuarioDto;
+
+    if (tipoUsuario === 1) {
+      // Estudiante: solo carreras, no áreas
+      if (!carreras || carreras.length === 0) {
         throw new HttpException(
           'Los estudiantes deben tener al menos una carrera asociada',
           HttpStatus.BAD_REQUEST,
         );
       }
-
+      if (areas && areas.length > 0) {
+        throw new HttpException(
+          'Los estudiantes no pueden tener áreas asociadas',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       // Validar que las carreras existan
       try {
-        for (const carreraId of crearUsuarioDto.carreras) {
+        for (const carreraId of carreras) {
           await firstValueFrom(
             this.httpService.get(
-              `${this.catalogServiceUrl}/carreras/${carreraId}`,
+              `${this.catalogServiceUrl}/carrera/${carreraId}`,
             ),
           );
         }
@@ -427,20 +430,64 @@ export class UsuarioService {
           HttpStatus.BAD_REQUEST,
         );
       }
-    }
-
-    // Si es funcionario (tipo 2), debe tener áreas
-    if (crearUsuarioDto.tipoUsuario === 2) {
-      if (!crearUsuarioDto.areas || crearUsuarioDto.areas.length === 0) {
+    } else if (tipoUsuario === 2) {
+      // Funcionario: puede tener carreras y/o áreas, pero debe tener al menos un área
+      if (
+        (!areas || areas.length === 0) &&
+        (!carreras || carreras.length === 0)
+      ) {
         throw new HttpException(
-          'Los funcionarios deben tener al menos un área asociada',
+          'Los funcionarios deben tener al menos un área o carrera asociada',
           HttpStatus.BAD_REQUEST,
         );
       }
-
+      if (areas && areas.length > 0) {
+        try {
+          for (const areaId of areas) {
+            await firstValueFrom(
+              this.httpService.get(`${this.catalogServiceUrl}/areas/${areaId}`),
+            );
+          }
+        } catch (error) {
+          throw new HttpException(
+            'Una o más áreas no existen',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      }
+      if (carreras && carreras.length > 0) {
+        try {
+          for (const carreraId of carreras) {
+            await firstValueFrom(
+              this.httpService.get(
+                `${this.catalogServiceUrl}/carrera/${carreraId}`,
+              ),
+            );
+          }
+        } catch (error) {
+          throw new HttpException(
+            'Una o más carreras no existen',
+            HttpStatus.BAD_REQUEST,
+          );
+        }
+      }
+    } else if (tipoUsuario === 3) {
+      // Administrador: solo áreas, no carreras
+      if (!areas || areas.length === 0) {
+        throw new HttpException(
+          'Los administradores deben tener al menos un área asociada',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      if (carreras && carreras.length > 0) {
+        throw new HttpException(
+          'Los administradores no pueden tener carreras asociadas',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
       // Validar que las áreas existan
       try {
-        for (const areaId of crearUsuarioDto.areas) {
+        for (const areaId of areas) {
           await firstValueFrom(
             this.httpService.get(`${this.catalogServiceUrl}/areas/${areaId}`),
           );

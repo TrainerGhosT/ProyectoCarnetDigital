@@ -1,7 +1,14 @@
-import { Controller, Get, Query, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Query,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { QrService } from './qr.service';
-import { AuthGuard } from './auth.guard';
+//import { AuthGuard } from './auth.guard';
 import { IsNotEmpty, IsString } from 'class-validator';
+import { ApiQuery } from '@nestjs/swagger';
 
 class GetQrDto {
   @IsNotEmpty({ message: 'La identificación del usuario es requerida' })
@@ -10,7 +17,7 @@ class GetQrDto {
 }
 
 @Controller('usuario')
-@UseGuards(AuthGuard)
+//@UseGuards(AuthGuard)
 export class QrController {
   constructor(private readonly qrService: QrService) {}
 
@@ -19,11 +26,16 @@ export class QrController {
    * Genera un código QR con la información del usuario
    * Recibe como parámetro query la identificación del usuario
    */
-  @Get('qr')
+  @Get('qr/:identificacion')
+  @ApiQuery({
+    name: 'identificacion',
+    required: true,
+    description: 'Identificación del usuario',
+  })
   async generateQrCode(@Query() query: GetQrDto) {
     try {
       const { identificacion } = query;
-      
+
       if (!identificacion) {
         throw new HttpException(
           'La identificación del usuario es requerida',
@@ -31,8 +43,9 @@ export class QrController {
         );
       }
 
-      const qrCodeBase64 = await this.qrService.generateUserQrCode(identificacion);
-      
+      const qrCodeBase64 =
+        await this.qrService.generateUserQrCode(identificacion);
+
       return {
         success: true,
         message: 'Código QR generado exitosamente',
@@ -46,7 +59,7 @@ export class QrController {
       if (error instanceof HttpException) {
         throw error;
       }
-      
+
       throw new HttpException(
         'Error interno al generar el código QR',
         HttpStatus.INTERNAL_SERVER_ERROR,

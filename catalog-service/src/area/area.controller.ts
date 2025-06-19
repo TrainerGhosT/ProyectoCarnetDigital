@@ -1,12 +1,12 @@
 import {
   Controller, Get, Post, Put, Delete, Param, Body,
-  HttpException, HttpStatus, UseGuards
+  HttpException, HttpStatus,
 } from '@nestjs/common';
-import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AreaService } from './area.service';
 import { CreateAreaDto } from './dto/create-area.dto';
 import { UpdateAreaDto } from './dto/update-area.dto';
-import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
+
 
 @ApiTags('Áreas de Trabajo')
 @Controller('area')

@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '../../../generated/prisma'; // esta es tu ruta personalizada
+import { PrismaClient } from '../../../generated/prisma'; 
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {

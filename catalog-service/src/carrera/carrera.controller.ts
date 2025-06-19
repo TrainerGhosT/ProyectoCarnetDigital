@@ -4,25 +4,25 @@ import {
   Get,
   Param,
   Body,
-  UseGuards,
+  //UseGuards,
   HttpException,
   HttpStatus
 } from '@nestjs/common';
 import {
   ApiTags,
-  ApiBearerAuth,
+  //ApiBearerAuth,
   ApiOperation,
   ApiResponse as SwaggerResponse
 } from '@nestjs/swagger';
 import { CarreraService } from './carrera.service';
 import { CreateCarreraDto } from './dto/create-carrera.dto';
-import { JwtAuthGuard } from '../shared/guards/jwt-auth.guard';
+
 import { Put, Delete } from '@nestjs/common';
 import { UpdateCarreraDto } from './dto/update-carrera.dto';
 
 @ApiTags('Carreras')
 @Controller('carrera')
-// @UseGuards(JwtAuthGuard)
+//@UseGuards(JwtAuthGuard)
 // @ApiBearerAuth()
 export class CarreraController {
   constructor(private readonly carreraService: CarreraService) {}

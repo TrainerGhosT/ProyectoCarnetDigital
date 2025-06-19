@@ -10,8 +10,8 @@ import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
-export class AuthGuard implements CanActivate {
-  private readonly logger = new Logger(AuthGuard.name);
+export class JwtAuthGuard implements CanActivate {
+  private readonly logger = new Logger(JwtAuthGuard.name);
   private readonly authServiceUrl: string;
 
   constructor(
@@ -40,6 +40,10 @@ export class AuthGuard implements CanActivate {
       );
 
       if (response.status === 200 && response.data === true) {
+        this.logger.log('Token válido', {
+          token,
+          userId: response.data.userId,
+        });
         return true;
       }
 

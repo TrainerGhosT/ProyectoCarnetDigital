@@ -15,7 +15,7 @@ import {
 import { Type } from 'class-transformer';
 
 export class TelefonoDto {
-  @ApiProperty({ description: 'Número de teléfono', example: '88887777' })
+  @ApiProperty({ description: 'Número de teléfono', example: '12345678' })
   @IsString({ message: 'El número debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'El número de teléfono no puede estar vacío' })
   @Matches(/^\d+$/, { message: 'El teléfono solo puede contener números' })
@@ -23,9 +23,7 @@ export class TelefonoDto {
   @MaxLength(20, { message: 'El teléfono no puede tener más de 20 dígitos' })
   numero: string;
 
-  @ApiProperty({ description: 'Tipo de teléfono (1=móvil, 2=fijo, etc.)', example: 1 })
-  @IsInt({ message: 'El tipo de teléfono debe ser un número entero' })
-  tipo: number;
+  
 }
 
 export class CrearUsuarioDto {

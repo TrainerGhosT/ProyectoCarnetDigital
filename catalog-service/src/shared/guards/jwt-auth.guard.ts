@@ -2,35 +2,55 @@ import {
   Injectable,
   CanActivate,
   ExecutionContext,
-  UnauthorizedException
+  UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
+import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
+  private readonly logger = new Logger(JwtAuthGuard.name);
+  private readonly authServiceUrl: string;
+
   constructor(
-    private jwtService: JwtService,
-    private configService: ConfigService
-  ) {}
+    private readonly httpService: HttpService,
+    private readonly configService: ConfigService,
+  ) {
+    this.authServiceUrl = this.configService.get<string>(
+      'AUTH_SERVICE_URL',
+      'http://localhost:3001'
+    );
+  }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
-      throw new UnauthorizedException('Token de acceso no proporcionado');
+      throw new UnauthorizedException('Token de acceso requerido');
     }
 
     try {
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET')
-      });
-      
-      request.user = payload;
-      return true;
+      const response = await firstValueFrom(
+        this.httpService.post(`${this.authServiceUrl}/validate`, {
+          token,
+        })
+      );
+
+      if (response.status === 200 && response.data === true) {
+        this.logger.log('Token válido', {
+          token,
+          userId: response.data.userId,
+        });
+        return true;
+      }
+
+      throw new UnauthorizedException('Token inválido');
     } catch (error) {
-      throw new UnauthorizedException('Token de acceso inválido o expirado');
+      this.logger.error('Error validando token con auth-service', error);
+      throw new UnauthorizedException('Error validando token de acceso');
     }
   }
 
