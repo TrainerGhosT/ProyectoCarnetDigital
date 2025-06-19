@@ -367,7 +367,7 @@ export class UsuarioService {
   }
 
   private async encriptarContrasena(contrasena: string): Promise<string> {
-    const saltRounds = 12;
+    const saltRounds = this.configService.get<number>('SALT_ROUNDS') || 10;
     return await bcrypt.hash(contrasena, saltRounds);
   }
 
