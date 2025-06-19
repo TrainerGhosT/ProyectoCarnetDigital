@@ -23,8 +23,8 @@ async function bootstrap() {
   });
   // Configuración de Swagger
   const config = new DocumentBuilder()
-    .setTitle('Auth Service API')
-    .setDescription('Servicio de autenticación para Carnet Digital')
+    .setTitle('User Service API')
+    .setDescription('Servicio de Usuarios para Carnet Digital')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

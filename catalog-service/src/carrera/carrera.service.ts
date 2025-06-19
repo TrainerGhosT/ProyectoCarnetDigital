@@ -26,7 +26,7 @@ export class CarreraService {
     const carrera = await this.prisma.carreras.create({ data: dto });
 
     return {
-      success: true,
+      
       message: 'Carrera registrada correctamente',
       data: carrera
     };
@@ -35,7 +35,7 @@ export class CarreraService {
   async findAll(): Promise<ApiResponse<Carrera[]>> {
     const carreras = await this.prisma.carreras.findMany({ orderBy: { nombre: 'asc' } });
     return {
-      success: true,
+      
       message: 'Lista de carreras',
       data: carreras,
       total: carreras.length
@@ -52,7 +52,7 @@ export class CarreraService {
     }
 
     return {
-      success: true,
+      
       message: 'Carrera encontrada',
       data: carrera
     };
@@ -71,7 +71,7 @@ export class CarreraService {
     });
 
     return {
-      success: true,
+      
       message: 'Carrera modificada correctamente',
       data: actualizada
     };
@@ -87,7 +87,7 @@ export class CarreraService {
     await this.prisma.carreras.delete({ where: { idCarrera: id } });
 
     return {
-      success: true,
+      
       message: 'Carrera eliminada correctamente'
     };
   }

@@ -1,20 +1,18 @@
 import {
   Controller,
   Get,
-  Query,
+  
   HttpException,
   HttpStatus,
+  Param,
 } from '@nestjs/common';
 import { QrService } from './qr.service';
 //import { AuthGuard } from './auth.guard';
-import { IsNotEmpty, IsString } from 'class-validator';
-import { ApiQuery } from '@nestjs/swagger';
 
-class GetQrDto {
-  @IsNotEmpty({ message: 'La identificación del usuario es requerida' })
-  @IsString({ message: 'La identificación debe ser una cadena de texto' })
-  identificacion: string;
-}
+import { ApiParam } from '@nestjs/swagger';
+
+
+
 
 @Controller('usuario')
 //@UseGuards(AuthGuard)
@@ -27,14 +25,14 @@ export class QrController {
    * Recibe como parámetro query la identificación del usuario
    */
   @Get('qr/:identificacion')
-  @ApiQuery({
+  @ApiParam({
     name: 'identificacion',
     required: true,
     description: 'Identificación del usuario',
   })
-  async generateQrCode(@Query() query: GetQrDto) {
+  async generateQrCode(@Param('identificacion' ) identificacion: string) {
     try {
-      const { identificacion } = query;
+      
 
       if (!identificacion) {
         throw new HttpException(
