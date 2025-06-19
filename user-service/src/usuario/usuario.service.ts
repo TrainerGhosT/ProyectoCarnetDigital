@@ -267,6 +267,7 @@ export class UsuarioService {
         tipoIdentificacion: true,
         identificacion: true,
         nombreCompleto: true,
+        contrasena: true,
         tipoUsuario: true,
         estadoUsuario: true,
         carreras: {

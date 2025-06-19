@@ -2,11 +2,15 @@ import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
-import { createClient} from 'redis';
+import { createClient } from 'redis';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
 import { ValidateDto } from './dto/validate.dto';
-import { AuthResponse, JwtPayload, RefreshTokenData } from './interfaces/auth.interface';
+import {
+  AuthResponse,
+  JwtPayload,
+  RefreshTokenData,
+} from './interfaces/auth.interface';
 import { ExternalUserService } from '../external/user.service';
 import { ExternalCatalogService } from '../external/catalog.service';
 
@@ -23,10 +27,11 @@ export class AuthService {
     private readonly externalUserService: ExternalUserService,
     private readonly externalCatalogService: ExternalCatalogService,
   ) {
-    this.jwtExpiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '5m';
-    this.refreshTokenExpiresIn = parseInt(this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN')) || 900; // 15 min
-
-    // Inicializar Redis
+    this.jwtExpiresIn =
+      this.configService.get<string>('JWT_EXPIRES_IN') || '5m';
+    this.refreshTokenExpiresIn =
+      parseInt(this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN')) ||
+      900; // 15 min
     this.initRedis();
   }
 
@@ -37,17 +42,14 @@ export class AuthService {
           host: this.configService.get<string>('REDIS_HOST') || 'localhost',
           port: parseInt(this.configService.get<string>('REDIS_PORT')) || 6379,
         },
-        
-        
       });
-
       await this.redisClient.connect();
       this.logger.log('Conexión a Redis establecida');
     } catch (error) {
       this.logger.error('Error conectando a Redis:', error);
       throw new HttpException(
         'Error de configuración del servicio',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
@@ -56,55 +58,74 @@ export class AuthService {
     const { correo, contrasena, tipoUsuario } = loginDto;
 
     try {
-      // 1. Validar que el usuario existe
+      // 1. Buscar usuario por correo usando el microservicio de usuario
       const user = await this.externalUserService.findUserByEmail(correo);
-      
+      console.log('user', user);
+
       if (!user) {
         throw new HttpException(
           'Usuario y/o contraseña incorrectos',
-          HttpStatus.UNAUTHORIZED
+          HttpStatus.UNAUTHORIZED,
         );
       }
 
-      // 2. Verificar contraseña
+      // 2. Validar contraseña
       const isPasswordValid = await bcrypt.compare(contrasena, user.contrasena);
+      console.log('password valid: ', isPasswordValid);
       if (!isPasswordValid) {
         throw new HttpException(
           'Usuario y/o contraseña incorrectos',
-          HttpStatus.UNAUTHORIZED
+          HttpStatus.UNAUTHORIZED,
         );
       }
 
-      // 3. Validar tipo de usuario
-      const tipoUsuarioData = await this.externalCatalogService.getTipoUsuarioById(user.tipoUsuario);
-      
-      if (tipoUsuarioData.nombre.toLowerCase() !== tipoUsuario.toLowerCase()) {
+      // 3. Consultar el nombre del tipo de usuario usando el microservicio de catálogo
+      const tipoUsuarioData =
+        await this.externalCatalogService.getTipoUsuarioById(user.tipoUsuario);
+
+      console.log('tipoUsuarioData', tipoUsuarioData);
+      // 4. Validar que el tipo de usuario coincida
+      if (
+        !tipoUsuarioData ||
+        !tipoUsuarioData.nombre ||
+        tipoUsuarioData.nombre.toLowerCase() !== tipoUsuario.toLowerCase()
+      ) {
         throw new HttpException(
           'Usuario y/o contraseña incorrectos',
-          HttpStatus.UNAUTHORIZED
+          HttpStatus.UNAUTHORIZED,
         );
       }
 
-      // 4. Verificar que el usuario esté activo
+      // 5. Validar que el usuario esté activo
       if (user.estadoUsuario !== 1) {
-        throw new HttpException(
-          'Usuario inactivo',
-          HttpStatus.UNAUTHORIZED
-        );
+        throw new HttpException('Usuario inactivo', HttpStatus.UNAUTHORIZED);
       }
 
-      // 5. Generar tokens
+      // 6. Generar tokens
       const payload: JwtPayload = {
         sub: user.idUsuario,
         email: user.correo,
         tipoUsuario: tipoUsuarioData.nombre,
       };
 
-      const accessToken = this.jwtService.sign(payload);
-      const refreshToken = await this.generateRefreshToken(user.idUsuario, user.correo, tipoUsuarioData.nombre);
+      const accessToken = this.jwtService.sign(payload, {
+        expiresIn: this.jwtExpiresIn,
+      });
+      const decoded: any = this.jwtService.decode(accessToken);
 
-      // 6. Calcular tiempo de expiración
-      const expiresIn = this.calculateExpirationTime();
+      // Calcula expires_in correctamente
+      const expiresIn =
+        decoded.exp && decoded.iat
+          ? decoded.exp - decoded.iat
+          : this.calculateExpirationTime();
+
+      const refreshToken = await this.generateRefreshToken(
+        user.idUsuario,
+        user.correo,
+        tipoUsuarioData.nombre,
+      );
+
+      // 7. Calcular tiempo de expiración
 
       return {
         expires_in: expiresIn,
@@ -112,21 +133,19 @@ export class AuthService {
         refresh_token: refreshToken,
         usuarioID: user.idUsuario,
       };
-
     } catch (error) {
       if (error instanceof HttpException) {
         throw error;
       }
-      
       this.logger.error('Error en login:', error);
       throw new HttpException(
         'Error interno del servidor',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  async refresh(refreshDto: RefreshDto): Promise<Omit<AuthResponse, 'usuarioID'>> {
+ async refresh(refreshDto: RefreshDto): Promise<Omit<AuthResponse, 'usuarioID'>> {
     const { refresh_token } = refreshDto;
 
     try {
@@ -237,20 +256,6 @@ export class AuthService {
       return parseInt(expiresIn);
     } else {
       return 300; // 5 minutos por defecto
-    }
-  }
-
-  // Método para cerrar sesión (opcional)
-  async logout(token: string): Promise<void> {
-    try {
-      const decoded = this.jwtService.decode(token) as any;
-      const timeToExpire = decoded.exp - Math.floor(Date.now() / 1000);
-      
-      if (timeToExpire > 0) {
-        await this.redisClient.setEx(`blacklist:${token}`, timeToExpire, 'true');
-      }
-    } catch (error) {
-      this.logger.warn('Error al hacer logout:', error);
     }
   }
 }

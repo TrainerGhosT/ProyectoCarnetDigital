@@ -2,7 +2,6 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
-import { UserFromService } from '../auth/interfaces/user.interface';
 
 @Injectable()
 export class ExternalUserService {
@@ -15,39 +14,19 @@ export class ExternalUserService {
     this.userServiceUrl = this.configService.get<string>('USER_SERVICE_URL') || 'http://localhost:3003';
   }
 
-  async findUserByEmail(email: string): Promise<UserFromService> {
+  async findUserByEmail(email: string): Promise<any> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${this.userServiceUrl}/usuario/email/${email}`)
+        this.httpService.get(`${this.userServiceUrl}/usuario`)
       );
-      return response.data;
+      const usuarios = response.data?.data || [];
+      // Busca el usuario por correo
+      const user = usuarios.find((u) => u.correo === email);
+      return user;
     } catch (error) {
-      if (error.response?.status === 404) {
-        throw new HttpException('Usuario no encontrado', HttpStatus.NOT_FOUND);
-      }
       throw new HttpException(
-        'Error al consultar el servicio de usuarios',
-        HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
-  }
-
-  async validateUserCredentials(email: string, password: string): Promise<UserFromService> {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post(`${this.userServiceUrl}/usuario/validate`, {
-          correo: email,
-          contrasena: password
-        })
-      );
-      return response.data;
-    } catch (error) {
-      if (error.response?.status === 401) {
-        throw new HttpException('Credenciales inválidas', HttpStatus.UNAUTHORIZED);
-      }
-      throw new HttpException(
-        'Error al validar credenciales',
-        HttpStatus.INTERNAL_SERVER_ERROR
+        'Error consultando el servicio de usuarios',
+        HttpStatus.BAD_GATEWAY
       );
     }
   }
