@@ -20,6 +20,7 @@ export class AuthService {
   private redisClient;
   private readonly jwtExpiresIn: string;
   private readonly refreshTokenExpiresIn: number;
+  private readonly refreshSecret: string;
 
   constructor(
     private readonly jwtService: JwtService,
@@ -27,11 +28,11 @@ export class AuthService {
     private readonly externalUserService: ExternalUserService,
     private readonly externalCatalogService: ExternalCatalogService,
   ) {
-    this.jwtExpiresIn =
-      this.configService.get<string>('JWT_EXPIRES_IN') || '5m';
-    this.refreshTokenExpiresIn =
-      parseInt(this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN')) ||
-      900; // 15 min
+    this.jwtExpiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '300s';
+    this.refreshTokenExpiresIn = this.configService.get<number>('REFRESH_TOKEN_EXPIRES_IN') || 900;
+    // Use a separate secret for refresh tokens
+    this.refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET')
+      || this.configService.get<string>('JWT_SECRET');
     this.initRedis();
   }
 
@@ -114,10 +115,11 @@ export class AuthService {
       const decoded: any = this.jwtService.decode(accessToken);
 
       // Calcula expires_in correctamente
-      const expiresIn =
-        decoded.exp && decoded.iat
-          ? decoded.exp - decoded.iat
-          : this.calculateExpirationTime();
+      const expiresAt = decoded.exp
+        ? new Date(decoded.exp * 1000).toLocaleString('es-CR', {
+            timeZone: 'America/Costa_Rica',
+          })
+        : null;
 
       const refreshToken = await this.generateRefreshToken(
         user.idUsuario,
@@ -128,7 +130,7 @@ export class AuthService {
       // 7. Calcular tiempo de expiración
 
       return {
-        expires_in: expiresIn,
+        expires_in: expiresAt,
         access_token: accessToken,
         refresh_token: refreshToken,
         usuarioID: user.idUsuario,
@@ -145,117 +147,90 @@ export class AuthService {
     }
   }
 
- async refresh(refreshDto: RefreshDto): Promise<Omit<AuthResponse, 'usuarioID'>> {
+   async refresh(refreshDto: RefreshDto): Promise<Omit<AuthResponse, 'usuarioID'>> {
     const { refresh_token } = refreshDto;
-
     try {
-      // 1. Verificar que el refresh token existe en Redis
-      const storedData = await this.redisClient.get(`refresh_token:${refresh_token}`);
-      
-      if (!storedData) {
+      // 1. Verificar firma y expiración del refresh token con el secreto dedicado
+      let payload: JwtPayload;
+      try {
+        payload = this.jwtService.verify(refresh_token, { secret: this.refreshSecret });
+      } catch (err) {
+        this.logger.warn('Refresh token inválido o expirado');
         throw new HttpException('No autorizado', HttpStatus.UNAUTHORIZED);
       }
 
-      // 2. Parsear datos del refresh token
+      // 2. Verificar que el token exista en Redis
+      const storedData = await this.redisClient.get(`refresh_token:${refresh_token}`);
+      if (!storedData) {
+        throw new HttpException('No autorizado', HttpStatus.UNAUTHORIZED);
+      }
       const refreshTokenData: RefreshTokenData = JSON.parse(storedData);
 
       // 3. Generar nuevo access token
-      const payload: JwtPayload = {
-        sub: refreshTokenData.userId,
-        email: refreshTokenData.email,
-        tipoUsuario: refreshTokenData.tipoUsuario,
-      };
+      const newAccessToken = this.jwtService.sign(
+        { sub: payload.userId, email: payload.email, tipoUsuario: payload.tipoUsuario },
+        { expiresIn: this.jwtExpiresIn }
+      );
+      const decoded: any = this.jwtService.decode(newAccessToken);
+      const expiresAt = decoded.exp
+        ? new Date(decoded.exp * 1000).toLocaleString('es-CR', { timeZone: 'America/Costa_Rica' })
+        : null;
 
-      const newAccessToken = this.jwtService.sign(payload);
-      
-      // 4. Generar nuevo refresh token
+      // 4. Generar nuevo refresh token y limpiar anterior
+      await this.redisClient.del(`refresh_token:${refresh_token}`);
       const newRefreshToken = await this.generateRefreshToken(
         refreshTokenData.userId,
         refreshTokenData.email,
-        refreshTokenData.tipoUsuario
+        refreshTokenData.tipoUsuario,
       );
 
-      // 5. Eliminar el refresh token anterior
-      await this.redisClient.del(`refresh_token:${refresh_token}`);
-
-      // 6. Calcular tiempo de expiración
-      const expiresIn = this.calculateExpirationTime();
-
       return {
-        expires_in: expiresIn,
+        expires_in: expiresAt,
         access_token: newAccessToken,
         refresh_token: newRefreshToken,
       };
-
     } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      
+      if (error instanceof HttpException) throw error;
       this.logger.error('Error en refresh:', error);
-      throw new HttpException(
-        'No autorizado',
-        HttpStatus.UNAUTHORIZED
-      );
+      throw new HttpException('No autorizado', HttpStatus.UNAUTHORIZED);
     }
   }
 
   async validate(validateDto: ValidateDto): Promise<boolean> {
     const { token } = validateDto;
-
     try {
-      // Verificar y decodificar el token
-      this.jwtService.verify(token);
-      
-      // Verificar que el token no esté en la lista negra (opcional)
+      this.jwtService.verify(token); // Verifica expiración y firma con JWT_SECRET
       const isBlacklisted = await this.redisClient.get(`blacklist:${token}`);
-      
-      if (isBlacklisted) {
-        return false;
-      }
-
-      return true;
+      return !isBlacklisted;
     } catch (error) {
-      this.logger.warn('Token inválido:', error.message);
+      this.logger.warn('Token inválido o expirado:', error.message);
       return false;
     }
   }
 
-  private async generateRefreshToken(userId: string, email: string, tipoUsuario: string): Promise<string> {
-    const refreshToken = this.jwtService.sign(
-      { userId, email, tipoUsuario },
-      { expiresIn: `${this.refreshTokenExpiresIn}s` }
-    );
-
-    // Almacenar en Redis con TTL
-    const refreshTokenData: RefreshTokenData = {
-      userId,
-      email,
-      tipoUsuario,
-      createdAt: new Date(),
-    };
-
-    await this.redisClient.setEx(
-      `refresh_token:${refreshToken}`,
-      this.refreshTokenExpiresIn,
-      JSON.stringify(refreshTokenData)
-    );
-
-    return refreshToken;
-  }
-
-  private calculateExpirationTime(): number {
-    const expiresIn = this.jwtExpiresIn;
-    
-    // Convertir a segundos
-    if (expiresIn.endsWith('m')) {
-      return parseInt(expiresIn) * 60;
-    } else if (expiresIn.endsWith('h')) {
-      return parseInt(expiresIn) * 3600;
-    } else if (expiresIn.endsWith('s')) {
-      return parseInt(expiresIn);
-    } else {
-      return 300; // 5 minutos por defecto
-    }
-  }
+  private async generateRefreshToken(
+  userId: string,
+  email: string,
+  tipoUsuario: string,
+): Promise<string> {
+  const refreshToken = this.jwtService.sign(
+    { userId, email, tipoUsuario },
+    { expiresIn: `${this.refreshTokenExpiresIn}s`, secret: this.refreshSecret },
+  );
+  const now = new Date( Date.now());
+  const expiresAt = new Date(now.getTime() + this.refreshTokenExpiresIn * 1000);
+  const refreshTokenData: RefreshTokenData & { expiresAt: string } = {
+    userId,
+    email,
+    tipoUsuario,
+    createdAt: now,
+    expiresAt: expiresAt.toLocaleString('es-CR', { timeZone: 'America/Costa_Rica' }),
+  };
+  await this.redisClient.setEx(
+    `refresh_token:${refreshToken}`,
+    this.refreshTokenExpiresIn,
+    JSON.stringify(refreshTokenData),
+  );
+  return refreshToken;
+}
 }

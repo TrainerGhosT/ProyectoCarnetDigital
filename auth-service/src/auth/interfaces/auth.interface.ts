@@ -1,5 +1,7 @@
+import { HttpStatus } from "@nestjs/common";
+
 export interface AuthResponse {
-  expires_in: number;
+  expires_in: string;
   access_token: string;
   refresh_token: string;
   usuarioID?: string;
@@ -11,6 +13,7 @@ export interface JwtPayload {
   tipoUsuario: string;
   iat?: number;
   exp?: number;
+  userId?: string;
 }
 
 export interface RefreshTokenData {
@@ -18,4 +21,11 @@ export interface RefreshTokenData {
   email: string;
   tipoUsuario: string;
   createdAt: Date;
+}
+
+export interface ValidateResponse {
+  validToken: boolean;
+  statusHttp: HttpStatus;
+  message?: string;
+
 }

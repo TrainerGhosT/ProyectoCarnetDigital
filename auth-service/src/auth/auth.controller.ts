@@ -1,8 +1,17 @@
-import { Controller, Post, Get, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  HttpException,
+} from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshDto } from './dto/refresh.dto';
+import { ValidateDto } from './dto/validate.dto';
 
 @ApiTags('Auth')
 @Controller()
@@ -12,99 +21,93 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Iniciar sesión' })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiHeader({
+    name: 'correo',
+    description: 'Correo del usuario',
+    required: true,
+  })
+  @ApiHeader({
+    name: 'contrasena',
+    description: 'Contraseña del usuario',
+    required: true,
+  })
+  @ApiHeader({
+    name: 'tipousuario',
+    description: 'Tipo de usuario',
+    required: true,
+  })
+  @ApiResponse({
+    status: 201,
     description: 'Login exitoso',
-    schema: {
-      type: 'object',
-      properties: {
-        expires_in: { type: 'number', example: 300 },
-        access_token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
-        refresh_token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
-        usuarioID: { type: 'string', example: '550e8400-e29b-41d4-a716-446655440000' }
-      }
-    }
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: 'Usuario y/o contraseña incorrectos',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'Usuario y/o contraseña incorrectos' }
-      }
-    }
   })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(
+    @Headers('correo') correo: string,
+    @Headers('contrasena') contrasena: string,
+    @Headers('tipousuario') tipoUsuario: string,
+  ) {
+    if (!correo || !contrasena || !tipoUsuario) {
+      throw new HttpException(
+        'Todos los datos son requeridos',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const loginRequest: LoginDto = { correo, contrasena, tipoUsuario };
+
+    return this.authService.login(loginRequest);
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Renovar token de acceso' })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiHeader({
+    name: 'refresh_token',
+    description: 'Refresh token para renovar acceso',
+    required: true
+  })
+  @ApiResponse({
+    status: 201,
     description: 'Token renovado exitosamente',
-    schema: {
-      type: 'object',
-      properties: {
-        expires_in: { type: 'number', example: 300 },
-        access_token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
-        refresh_token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' }
-      }
-    }
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: 'No autorizado',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'No autorizado' }
-      }
-    }
   })
-  async refresh(@Body() refreshDto: RefreshDto) {
-    return this.authService.refresh(refreshDto);
+  async refresh(@Headers('refresh_token') refresh_token: string) {
+    
+    if (!refresh_token) { 
+      throw new HttpException('Refresh token faltante', HttpStatus.UNAUTHORIZED);
+    }
+
+    const refreshTokenData: RefreshDto = { refresh_token };
+
+    return this.authService.refresh(refreshTokenData);
   }
 
   @Get('validate')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Validar token de acceso' })
-  @ApiQuery({ 
-    name: 'token', 
-    description: 'Token JWT a validar',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-  })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiHeader({ name: 'token', description: 'JWT de acceso', required: true })
+  @ApiResponse({
+    status: 200,
     description: 'Token válido',
-    schema: {
-      type: 'boolean',
-      example: true
-    }
+    schema: { type: 'boolean' },
   })
-  @ApiResponse({ 
-    status: 401, 
-    description: 'Token inválido',
-    schema: {
-      type: 'object',
-      properties: {
-        message: { type: 'string', example: 'Unauthorized' }
-      }
-    }
-  })
-  async validate(@Query('token') token: string) {
+  @ApiResponse({ status: 401, description: 'Token inválido' })
+  async validate(@Headers('token') token: string) {
     if (!token) {
-      return false;
+      throw new HttpException('Token requerido', HttpStatus.BAD_REQUEST);
     }
-    
-    const isValid = await this.authService.validate({ token });
-    
+    const tokenData: ValidateDto = { token };
+
+    const isValid = await this.authService.validate(tokenData);
     if (!isValid) {
-      return false;
+      throw new HttpException('Token inválido o expirado', HttpStatus.UNAUTHORIZED);
     }
-    
     return true;
   }
 }
