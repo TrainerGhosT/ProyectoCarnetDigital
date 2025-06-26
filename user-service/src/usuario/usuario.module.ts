@@ -5,7 +5,7 @@ import { UsuarioController } from './usuario.controller';
 import { UsuarioService } from './usuario.service';
 import { JwtAuthGuard } from 'src/common/jwt-auth.guard';
 import { PrismaService } from 'src/common/prisma.service';
-
+import { EstadoUsuarioService } from './estado-usuario.service';
 
 @Module({
   imports: [
@@ -16,7 +16,12 @@ import { PrismaService } from 'src/common/prisma.service';
     PrismaModule,
   ],
   controllers: [UsuarioController],
-  providers: [UsuarioService, JwtAuthGuard , PrismaService],
-  exports: [UsuarioService],
+  providers: [
+    UsuarioService,
+    EstadoUsuarioService,
+    JwtAuthGuard,
+    PrismaService,
+  ],
+  exports: [UsuarioService, EstadoUsuarioService],
 })
 export class UsuarioModule {}

@@ -11,22 +11,28 @@ import {
   HttpStatus,
   HttpException,
   ParseUUIDPipe,
+  Patch,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { UsuarioService } from './usuario.service';
 //import { AuthGuard } from './auth.guard';
 
-
 import { FiltrarUsuarioDto } from './dto/filtrar-usuario.dto';
 import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
+import { EstadoUsuarioService } from './estado-usuario.service';
+import {
+  CambiarEstadoUsuarioDto,
+  EstadoUsuarioResponseDto,
+} from './dto/estado-usuario.dto';
 
 @ApiTags('Usuario')
 @Controller('usuario')
-
-
 export class UsuarioController {
-  constructor(private readonly usuarioService: UsuarioService) {}
+  constructor(
+    private readonly usuarioService: UsuarioService,
+    private readonly estadoUsuarioService: EstadoUsuarioService,
+  ) {}
 
   @Post()
   @ApiOperation({ summary: 'Crear un nuevo usuario' })
@@ -45,7 +51,7 @@ export class UsuarioController {
     } catch (error) {
       if (error.code === 'P2002') {
         throw new HttpException(
-          'El tipo de usuario o alguno de los datos ya se encuentran registrados', 
+          'El tipo de usuario o alguno de los datos ya se encuentran registrados',
           HttpStatus.CONFLICT,
         );
       }
@@ -62,7 +68,10 @@ export class UsuarioController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() actualizarUsuarioDto: ActualizarUsuarioDto,
   ) {
-    const usuario = await this.usuarioService.actualizarUsuario(id, actualizarUsuarioDto);
+    const usuario = await this.usuarioService.actualizarUsuario(
+      id,
+      actualizarUsuarioDto,
+    );
     return {
       status: 'success',
       message: 'Usuario actualizado exitosamente',
@@ -85,10 +94,25 @@ export class UsuarioController {
 
   @Get()
   @ApiOperation({ summary: 'Obtener todos los usuarios o filtrados' })
-  @ApiQuery({ name: 'identificacion', required: false, description: 'Filtrar por identificación' })
-  @ApiQuery({ name: 'nombre', required: false, description: 'Filtrar por nombre' })
-  @ApiQuery({ name: 'tipo', required: false, description: 'Filtrar por tipo de usuario' })
-  @ApiResponse({ status: 200, description: 'Lista de usuarios obtenida exitosamente' })
+  @ApiQuery({
+    name: 'identificacion',
+    required: false,
+    description: 'Filtrar por identificación',
+  })
+  @ApiQuery({
+    name: 'nombre',
+    required: false,
+    description: 'Filtrar por nombre',
+  })
+  @ApiQuery({
+    name: 'tipo',
+    required: false,
+    description: 'Filtrar por tipo de usuario',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de usuarios obtenida exitosamente',
+  })
   @ApiResponse({ status: 401, description: 'Token inválido' })
   async obtenerUsuariosFiltrados(@Query() filtros: FiltrarUsuarioDto) {
     const usuarios = await this.usuarioService.obtenerUsuarios(filtros);
@@ -98,7 +122,6 @@ export class UsuarioController {
       data: usuarios,
     };
   }
-
 
   @Get(':id')
   @ApiOperation({ summary: 'Obtener un usuario por ID' })
@@ -112,5 +135,26 @@ export class UsuarioController {
       message: 'Usuario obtenido exitosamente',
       data: usuario,
     };
+  }
+
+  @Patch('estado/:id')
+  @ApiOperation({ summary: 'Cambiar el estado de un usuario' })
+  @ApiResponse({
+    status: 200,
+    description: 'Estado actualizado',
+    type: EstadoUsuarioResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Error al cambiar el estado' })
+  @ApiResponse({ status: 404, description: 'Usuario o estado no encontrado' })
+  async cambiarEstadoUsuario(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CambiarEstadoUsuarioDto,
+  ): Promise<EstadoUsuarioResponseDto> {
+    const estadoUsuario = await this.estadoUsuarioService.cambiarEstadoUsuario(
+      id,
+      dto,
+    );
+
+    return estadoUsuario;
   }
 }
