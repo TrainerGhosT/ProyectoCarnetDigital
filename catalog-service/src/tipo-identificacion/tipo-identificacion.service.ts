@@ -9,17 +9,12 @@ import { PrismaService } from 'src/shared/services/prisma.service';
 @Injectable()
 export class TiposIdentificacionService {
   private readonly logger = new Logger(TiposIdentificacionService.name);
-  private readonly authServiceUrl: string;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
-  ) {
-    this.authServiceUrl =
-      this.configService.get<string>('AUTH_SERVICE_URL') ||
-      'http://localhost:3001';
-  }
+  ) {}
 
   // Crear tipo de identificación
   async crear(dto: CrearTipoIdentificacionDto) {

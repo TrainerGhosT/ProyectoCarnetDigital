@@ -6,6 +6,7 @@ import { CarreraModule } from './carrera/carrera.module';
 import { AreaModule } from './area/area.module'
 import { TiposUsuarioModule } from './tipo-usuario/tipo-usuario.module';
 import { TiposIdentificacionModule } from './tipo-identificacion/tipo-identificacion.module';
+import { EstadoModule } from './estado/estado.module';
 
 
 @Module({
@@ -21,7 +22,8 @@ import { TiposIdentificacionModule } from './tipo-identificacion/tipo-identifica
     TiposUsuarioModule,
     TiposIdentificacionModule,
     AreaModule,
-    CarreraModule
+    CarreraModule,
+    EstadoModule
   ],
 })
 export class AppModule {}
