@@ -4,6 +4,7 @@ import { HttpModule } from '@nestjs/axios';
 import { QrModule } from './qr/qr.module';
 import { UsuarioModule } from './usuario/usuario.module';
 import { PrismaModule } from 'src/prisma.module';
+import { FotografiaUsuarioModule } from './fotografia/fotografia.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { PrismaModule } from 'src/prisma.module';
     }),
     UsuarioModule,
     QrModule,
-    PrismaModule
+    FotografiaUsuarioModule,
+    PrismaModule,
   ],
 })
 export class AppModule {}
