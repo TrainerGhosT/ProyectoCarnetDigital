@@ -9,9 +9,12 @@ import {
   Patch,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-
-//import { AuthGuard } from './auth.guard';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
 import { UserService } from './user.service';
@@ -34,10 +37,9 @@ export class UserController {
   @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
   @ApiResponse({ status: 401, description: 'Token inválido' })
   async obtenerUsuarioPorId(@Param('id', ParseUUIDPipe) id: string) {
-    
-    return await this.userService.getUser(id); 
+    const data = await this.userService.getUser(id);
 
-    
+    return data;
   }
 
   @Put(':id')
@@ -49,7 +51,9 @@ export class UserController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() actualizarUsuarioDto: ActualizarUsuarioDto,
   ) {
-    return await this.userService.updateUser(id, actualizarUsuarioDto);
+    const data = await this.userService.updateUser(id, actualizarUsuarioDto);
+
+    return data;
   }
 
   @Delete(':id')

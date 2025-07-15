@@ -21,9 +21,10 @@ export class UserService {
 
   async getUser(id: string) {
     try {
-      await firstValueFrom(
+      const response = await firstValueFrom(
         this.httpService.get(`${this.userServiceUrl}/usuario/${id}`),
       );
+      return response.data;
     } catch (error) {
       throw new HttpException(
         'Error al consultar usuario',
