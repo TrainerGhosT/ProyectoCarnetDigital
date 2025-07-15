@@ -5,6 +5,7 @@ import { QrModule } from './qr/qr.module';
 import { UsuarioModule } from './usuario/usuario.module';
 import { PrismaModule } from 'src/prisma.module';
 import { FotografiaUsuarioModule } from './fotografia/fotografia.module';
+import { BitacoraModule } from './bitacora/bitacora.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { FotografiaUsuarioModule } from './fotografia/fotografia.module';
       timeout: 10000,
       maxRedirects: 5,
     }),
+    BitacoraModule,
     UsuarioModule,
     QrModule,
     FotografiaUsuarioModule,

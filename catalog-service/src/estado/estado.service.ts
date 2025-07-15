@@ -97,6 +97,48 @@ export class EstadoService {
     }
   }
 
+  // Actualizar estado
+  async actualizar(id: number, dto: CrearEstadoDto) { 
+    try {
+      
+      // Verificar si existe el estado a actualizar
+      const estadoExistente = await this.prisma.estados.findUnique({
+        where: { idEstado: id },
+      });
+
+      if (!estadoExistente) {
+        throw new HttpException('Estado no encontrado', HttpStatus.NOT_FOUND);
+      }
+
+      // Verificar si el nombre del estado ya existe
+      const existente = await this.prisma.estados.findUnique({
+        where: { nombre: dto.nombre.trim() },
+      });
+
+      if (existente) {
+        throw new HttpException(
+          'Ya existe un estado con ese nombre',
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      const estadoActualizado = await this.prisma.estados.update({
+        where: { idEstado: id },
+        data: {
+          nombre: dto.nombre.trim(),
+        },
+      });
+
+      this.logger.log(`Estado actualizado: ${estadoActualizado.nombre}`);
+      return { message: 'Estado actualizado exitosamente' , estadoActualizado};
+    } catch (error) {
+      throw new HttpException(
+        'Error interno del servidor',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
   // Eliminar estado
   async eliminar(id: number) {
     try {

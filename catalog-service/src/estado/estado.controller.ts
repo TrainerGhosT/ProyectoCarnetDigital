@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { EstadoService } from './estado.service';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { EstadoResponse } from './interface/estado.interface';
@@ -55,5 +63,34 @@ export class EstadoController {
   })
   async crearEstado(@Body() estadoDto: CrearEstadoDto) {
     return await this.estadoService.crear(estadoDto);
+  }
+
+  @Put(':id')
+  @ApiOperation({
+    summary: 'Actualizar un estado',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Estado actualizado exitosamente',
+  })
+  @ApiResponse({ status: 404, description: 'Estado no encontrado' })
+  @ApiResponse({ status: 401, description: 'Token inválido' })
+  @ApiResponse({ status: 409, description: 'Estado ya existente' })
+  async actualizarEstado(@Param('id') id: number, @Body() dto: CrearEstadoDto) {
+    return await this.estadoService.actualizar(id, dto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({
+    summary: 'Eliminar un estado',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Estado eliminado exitosamente',
+  })
+  @ApiResponse({ status: 404, description: 'Estado no encontrado' })
+  @ApiResponse({ status: 401, description: 'Token inválido' })
+  async eliminarEstado(@Param('id') id: number) {
+    return await this.estadoService.eliminar(id);
   }
 }

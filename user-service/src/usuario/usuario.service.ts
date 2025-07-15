@@ -240,6 +240,8 @@ export class UsuarioService {
 
   async obtenerUsuarios(filtros: FiltrarUsuarioDto) {
     const where: any = {};
+    
+    
 
     if (filtros.identificacion) {
       where.identificacion = {
@@ -251,7 +253,7 @@ export class UsuarioService {
     if (filtros.nombre) {
       where.nombreCompleto = {
         contains: filtros.nombre,
-        mode: 'insensitive',
+        mode: 'insensitive'
       };
     }
 
@@ -287,6 +289,10 @@ export class UsuarioService {
         },
       },
     });
+
+    if (usuarios.length === 0) {
+      throw new HttpException('No se encontraron usuarios con los datos proporcionados', HttpStatus.NOT_FOUND);
+    } 
 
     return usuarios;
   }

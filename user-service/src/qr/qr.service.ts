@@ -162,3 +162,4 @@ export class QrService {
     return list.length ? list : ['Sin asociaciones'];
   }
 }
+

@@ -26,7 +26,6 @@ async function bootstrap() {
     .setTitle('User Service API')
     .setDescription('Servicio de Usuarios para Carnet Digital')
     .setVersion('1.0')
-    .addBearerAuth()
     .build();
   
   const document = SwaggerModule.createDocument(app, config);

@@ -19,11 +19,11 @@ import { EstadoModule } from './estado/estado.module';
       timeout: 10000,
       maxRedirects: 5,
     }),
-    TiposUsuarioModule,
-    TiposIdentificacionModule,
     AreaModule,
     CarreraModule,
-    EstadoModule
+    EstadoModule,
+    TiposUsuarioModule,
+    TiposIdentificacionModule,
   ],
 })
 export class AppModule {}

@@ -1,4 +1,4 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
@@ -18,10 +18,12 @@ export class ExternalCatalogService {
     try {
       const response = await firstValueFrom(
         this.httpService.get(`${this.catalogServiceUrl}/tiposusuario/${id}`)
+
       );
-      // Puede variar según la estructura de tu microservicio de catálogo
+      Logger.log('response', response.toString());
+      
       return response.data
-      console.log('response', response);
+      
     } catch (error) {
       throw new HttpException(
         'Error consultando el servicio de catálogo',

@@ -1,71 +1,93 @@
+// src/auth/auth.controller.ts
 import {
   Controller,
   Post,
   Get,
   Body,
   Headers,
-  HttpCode,
+  HttpException,
   HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
-import { LoginRequest, RefreshRequest } from '../../interfaces/auth.interface';
 import {
   ApiTags,
   ApiOperation,
-  ApiHeader,
   ApiResponse,
-  ApiBearerAuth,
+  ApiBody,
+  ApiHeader,
 } from '@nestjs/swagger';
+import { AuthService } from './auth.service';
+import { LoginDto } from './dto/login.dto';
 
-@ApiTags('Autenticación')
+@ApiTags('Authentication')
 @Controller()
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  @ApiOperation({
-    summary: 'Iniciar sesión',
-    description: 'Endpoint para autenticar usuarios',
+  @ApiOperation({ summary: 'User login' })
+  @ApiHeader({
+    name: 'correo',
+    description: 'Correo del usuario',
+    required: true,
   })
-  @ApiHeader({ name: 'usuario', description: 'Correo electrónico del usuario' })
-  @ApiHeader({ name: 'contrasena', description: 'Contraseña del usuario' })
+  @ApiHeader({
+    name: 'contrasena',
+    description: 'Contraseña del usuario',
+    required: true,
+  })
   @ApiHeader({
     name: 'tipousuario',
-    description: 'Tipo de usuario (estudiante, profesor, etc.)',
+    description: 'Tipo de usuario',
+    required: true,
   })
-  @ApiResponse({ status: 201, description: 'Login exitoso' })
-  @ApiResponse({ status: 401, description: 'Credenciales inválidas' })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
   async login(
-    @Headers('usuario') correo: string,
-    @Headers('contrasena') contraseña: string,
+    @Headers('correo') correo: string,
+    @Headers('contrasena') contrasena: string,
     @Headers('tipousuario') tipoUsuario: string,
   ) {
-    const loginDto: LoginRequest = { correo, contraseña, tipoUsuario };
-    return this.authService.login(loginDto);
+    if (!correo || !contrasena || !tipoUsuario) {
+      throw new HttpException('Datos incompletos', HttpStatus.BAD_REQUEST);
+    }
+    return this.authService.login({ correo, contrasena, tipoUsuario });
   }
 
   @Post('refresh')
-  
-  @ApiOperation({
-    summary: 'Refrescar token',
-    description: 'Endpoint para renovar el token de acceso',
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiHeader({
+    name: 'refresh_token',
+    description: 'Refresh token para renovar acceso',
+    required: true,
   })
-  @ApiResponse({ status: 201, description: 'Token refrescado exitosamente' })
-  @ApiResponse({ status: 401, description: 'Token de refresco inválido' })
-  async refresh(@Body() refreshDto: RefreshRequest) {
-    return this.authService.refresh(refreshDto);
+  @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid refresh token' })
+  async refresh(@Headers('refresh_token') refresh_token: string) {
+    try {
+      return await this.authService.refresh(refresh_token);
+    } catch (error) {
+      throw new HttpException(
+        error.response?.data || 'Token refresh failed',
+        error.response?.status || HttpStatus.UNAUTHORIZED,
+      );
+    }
   }
 
   @Get('validate')
-  //@ApiBearerAuth()
-  @ApiOperation({
-    summary: 'Validar token',
-    description: 'Endpoint para validar el token de acceso',
-  })
-  
-  @ApiResponse({ status: 200, description: 'Token válido' })
-  @ApiResponse({ status: 401, description: 'Token inválido o expirado' })
-  async validate(@Headers('authorization') authHeader: string) {
-    return this.authService.validate(authHeader);
+  @ApiOperation({ summary: 'Validate access token' })
+  @ApiHeader({ name: 'token', description: 'Access token to validate' })
+  @ApiResponse({ status: 200, description: 'Token is valid' })
+  @ApiResponse({ status: 401, description: 'Invalid token' })
+  async validate(@Headers('token') token: string) {
+    try {
+      return await this.authService.validate(token);
+    } catch (error) {
+      throw new HttpException(
+        error.response?.data || 'Token validation failed',
+        error.response?.status || HttpStatus.UNAUTHORIZED,
+      );
+    }
   }
 }

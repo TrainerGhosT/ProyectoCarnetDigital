@@ -1,4 +1,4 @@
-// src/services/fotografia-usuario.service.ts
+
 import {
   Injectable,
   NotFoundException,

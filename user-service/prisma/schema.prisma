@@ -94,3 +94,11 @@ model UsuarioQr {
 
   @@map("usuario_qr")
 }
+
+model Bitacora { 
+  idBitacora Int @id @default(autoincrement())
+  usuario String @map("id_Usuario") @db.Uuid
+  descripcion Json @db.Json
+
+  @@map("bitacora")
+}

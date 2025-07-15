@@ -9,6 +9,7 @@ import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   private readonly logger = new Logger(JwtAuthGuard.name);
@@ -20,13 +21,14 @@ export class JwtAuthGuard implements CanActivate {
   ) {
     this.authServiceUrl = this.configService.get<string>(
       'AUTH_SERVICE_URL',
-      'http://localhost:3001'
+      'http://localhost:3001',
     );
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
+    Logger.log('token', token.toString());
 
     if (!token) {
       throw new UnauthorizedException('Token de acceso requerido');
@@ -34,9 +36,9 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${this.authServiceUrl}/validate`, {
-          token,
-        })
+        this.httpService.get(`${this.authServiceUrl}/validate`,  {
+          headers: { token },
+        }),
       );
 
       if (response.status === 200 && response.data === true) {

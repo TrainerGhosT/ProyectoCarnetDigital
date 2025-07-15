@@ -14,6 +14,7 @@ async function bootstrap() {
   
   
   
+  
   // Global validation pipe
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
@@ -25,17 +26,17 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('API Gateway - Carnet Digital')
     .setDescription('API Gateway para el sistema de Carnet Digital')
-    .addBearerAuth()
     .setVersion('1.0')
+    .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
+  SwaggerModule.setup('api', app, document);
 
   // CORS configuration
   app.enableCors({
     origin: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'multipart/form-data'],
+    
     credentials: true,
   });
 

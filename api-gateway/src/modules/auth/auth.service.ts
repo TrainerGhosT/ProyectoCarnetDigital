@@ -1,12 +1,15 @@
-import { Injectable, HttpException } from '@nestjs/common';
+import { Injectable, HttpException, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { LoginRequest, RefreshRequest } from '../../interfaces/auth.interface';
+import { LoginDto } from './dto/login.dto';
+import { JwtFromRequestFunction } from 'passport-jwt';
 
 @Injectable()
 export class AuthService {
   private readonly authServiceUrl: string;
+  
 
   constructor(
     private readonly httpService: HttpService,
@@ -15,10 +18,21 @@ export class AuthService {
     this.authServiceUrl = this.configService.get<string>('AUTH_SERVICE_URL');
   }
 
-  async login(loginDto: LoginRequest) {
+  async login(loginDto: LoginDto) {
+    const { correo, contrasena, tipoUsuario } = loginDto;
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${this.authServiceUrl}/login`, loginDto),
+        this.httpService.post(
+          `${this.authServiceUrl}/login`,
+          null, 
+          {
+            headers: {
+              correo,
+              contrasena,
+              tipoUsuario,
+            },
+          },
+        ),
       );
       return response.data;
     } catch (error) {
@@ -29,10 +43,12 @@ export class AuthService {
     }
   }
 
-  async refresh(refreshDto: RefreshRequest) {
+  async refresh(refresh_token: string) {
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${this.authServiceUrl}/refresh`, refreshDto),
+        this.httpService.post(`${this.authServiceUrl}/refresh`, null, {
+          headers: { refresh_token },
+        }),
       );
       return response.data;
     } catch (error) {
@@ -43,11 +59,11 @@ export class AuthService {
     }
   }
 
-  async validate(authHeader: string) {
+  async validate(token: string) {
     try {
       const response = await firstValueFrom(
         this.httpService.get(`${this.authServiceUrl}/validate`, {
-          headers: { Authorization: authHeader },
+          headers: { token },
         }),
       );
       return response.data;

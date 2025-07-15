@@ -1,8 +1,15 @@
-import { Injectable, HttpException } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { UsuarioDto, UsuarioFiltrosDto } from '../../interfaces/user.interface';
+import { CrearUsuarioDto } from './dto/crear-usuario.dto';
+import {
+  ActualizarFotografiaDto,
+  FotografiaResponseDto,
+  ObtenerFotografiaDto,
+} from './dto/fotografia-usuario.dto';
+import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
 
 @Injectable()
 export class UserService {
@@ -15,167 +22,68 @@ export class UserService {
     this.userServiceUrl = this.configService.get<string>('USER_SERVICE_URL');
   }
 
-  async createUser(usuario: UsuarioDto, authHeader: string) {
+  async createUser(usuario: CrearUsuarioDto) {
     try {
       const response = await firstValueFrom(
-        this.httpService.post(`${this.userServiceUrl}/usuario`, usuario, {
-          headers: { Authorization: authHeader }
-        })
+        this.httpService.post(`${this.userServiceUrl}/usuario`, usuario),
       );
       return response.data;
     } catch (error) {
       throw new HttpException(
         error.response?.data || 'Error al crear usuario',
-        error.response?.status || 500
+        error.response?.status || 500,
       );
     }
   }
 
-  async updateUser(id: string, usuario: UsuarioDto, authHeader: string) {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.put(`${this.userServiceUrl}/usuario/${id}`, usuario, {
-          headers: { Authorization: authHeader }
-        })
-      );
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        error.response?.data || 'Error al actualizar usuario',
-        error.response?.status || 500
-      );
-    }
-  }
-
-  async deleteUser(id: string, authHeader: string) {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.delete(`${this.userServiceUrl}/usuario/${id}`, {
-          headers: { Authorization: authHeader }
-        })
-      );
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        error.response?.data || 'Error al eliminar usuario',
-        error.response?.status || 500
-      );
-    }
-  }
-
-  async getAllUsers(authHeader: string) {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.get(`${this.userServiceUrl}/usuario`, {
-          headers: { Authorization: authHeader }
-        })
-      );
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        error.response?.data || 'Error al obtener usuarios',
-        error.response?.status || 500
-      );
-    }
-  }
-
-  async getUsersFiltered(filters: UsuarioFiltrosDto, authHeader: string) {
+  async getUsers(filters: UsuarioFiltrosDto) {
     try {
       const queryParams = new URLSearchParams();
-      if (filters.identificacion) queryParams.append('identificacion', filters.identificacion);
+      if (filters.identificacion)
+        queryParams.append('identificacion', filters.identificacion);
       if (filters.nombre) queryParams.append('nombre', filters.nombre);
       if (filters.tipo) queryParams.append('tipo', filters.tipo);
 
       const response = await firstValueFrom(
-        this.httpService.get(`${this.userServiceUrl}/usuario/filter?${queryParams.toString()}`, {
-          headers: { Authorization: authHeader }
-        })
+        this.httpService.get(`${this.userServiceUrl}/usuario/?${queryParams}`),
       );
       return response.data;
     } catch (error) {
       throw new HttpException(
         error.response?.data || 'Error al filtrar usuarios',
-        error.response?.status || 500
+        error.response?.status || 500,
       );
     }
   }
 
-  async getUserById(id: string, authHeader: string) {
+  async getPhoto(dto: ObtenerFotografiaDto): Promise<FotografiaResponseDto> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${this.userServiceUrl}/usuario/${id}`, {
-          headers: { Authorization: authHeader }
-        })
-      );
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        error.response?.data || 'Error al obtener usuario',
-        error.response?.status || 500
-      );
-    }
-  }
-
-  async updatePhoto(data: { usuarioId: string; fotografia: string }, authHeader: string) {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post(`${this.userServiceUrl}/usuario/fotografia`, data, {
-          headers: { Authorization: authHeader }
-        })
-      );
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        error.response?.data || 'Error al actualizar fotografía',
-        error.response?.status || 500
-      );
-    }
-  }
-
-  async deletePhoto(id: string, authHeader: string) {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.delete(`${this.userServiceUrl}/usuario/fotografia/${id}`, {
-          headers: { Authorization: authHeader }
-        })
-      );
-      return response.data;
-    } catch (error) {
-      throw new HttpException(
-        error.response?.data || 'Error al eliminar fotografía',
-        error.response?.status || 500
-      );
-    }
-  }
-
-  async getPhoto(id: string, authHeader: string) {
-    try {
-      const response = await firstValueFrom(
-        this.httpService.get(`${this.userServiceUrl}/usuario/fotografia/${id}`, {
-          headers: { Authorization: authHeader }
-        })
+        this.httpService.get(
+          `${this.userServiceUrl}/usuario/fotografia/${dto.usuarioId}`,
+        ),
       );
       return response.data;
     } catch (error) {
       throw new HttpException(
         error.response?.data || 'Error al obtener fotografía',
-        error.response?.status || 500
+        error.response?.status || 500,
       );
     }
   }
 
-  async getQR(identificacion: string, authHeader: string) {
+  async getQR(identificacion: string) {
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${this.userServiceUrl}/usuario/qr/${identificacion}`, {
-          headers: { Authorization: authHeader }
-        })
+        this.httpService.get(
+          `${this.userServiceUrl}/usuario/qr/${identificacion}`,
+        ),
       );
       return response.data;
     } catch (error) {
       throw new HttpException(
         error.response?.data || 'Error al generar QR',
-        error.response?.status || 500
+        error.response?.status || 500,
       );
     }
   }
