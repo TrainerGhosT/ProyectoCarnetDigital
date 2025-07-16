@@ -1,17 +1,19 @@
 import {
   Controller, Get, Post, Put, Delete, Param, Body,
   HttpException, HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { AreaService } from './area.service';
 import { CreateAreaDto } from './dto/create-area.dto';
 import { UpdateAreaDto } from './dto/update-area.dto';
+import { JwtAuthGuard } from 'src/config/jwt-auth.guard';
 
 
 @ApiTags('Áreas de Trabajo')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('area')
-// @UseGuards(JwtAuthGuard)
-// @ApiBearerAuth()
 export class AreaController {
   constructor(private readonly areaService: AreaService) {}
 

@@ -1,9 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { EstadoService } from './estado.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EstadoResponse } from './interface/estado.interface';
 import { CrearEstadoDto } from './dto/crear-estado.dto';
+import { JwtAuthGuard } from 'src/config/jwt-auth.guard';
 
+@ApiTags('Estados')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('estados')
 export class EstadoController {
   constructor(private readonly estadoService: EstadoService) {}

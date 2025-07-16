@@ -7,13 +7,18 @@ import {
   Body,
   Param,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 
 import { CrearTipoIdentificacionDto } from './dto/crear-tipo-identificacion.dto';
 import { ActualizarTipoIdentificacionDto } from './dto/actualizar-tipo-identificacion.dto';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { TiposIdentificacionService } from './tipo-identificacion.service';
+import { JwtAuthGuard } from 'src/config/jwt-auth.guard';
 
+@ApiTags('Tipos de identificación')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('tiposidentificacion')
 export class TiposIdentificacionController {
   constructor(

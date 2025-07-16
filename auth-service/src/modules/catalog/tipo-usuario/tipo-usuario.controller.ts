@@ -9,13 +9,18 @@ import {
   HttpException,
   HttpStatus,
   ParseIntPipe,
+  UseGuards,
 } from '@nestjs/common';
 
 import { CrearTipoUsuarioDto } from './dto/crear-tipo-usuario.dto';
 import { ActualizarTipoUsuarioDto } from './dto/actualizar-tipo-usuario.dto';
 import { TiposUsuarioService } from './tipo-usuario.service';
-import { ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from 'src/config/jwt-auth.guard';
 
+@ApiTags('Tipos de usuario')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('tiposusuario')
 export class TiposUsuarioController {
   constructor(private readonly tiposUsuarioService: TiposUsuarioService) {}

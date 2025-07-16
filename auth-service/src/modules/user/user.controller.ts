@@ -22,7 +22,7 @@ import {
   CambiarEstadoUsuarioDto,
   EstadoUsuarioResponseDto,
 } from './dto/estado-usuario.dto';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/config/jwt-auth.guard';
 
 @ApiTags('Usuario')
 @ApiBearerAuth()
