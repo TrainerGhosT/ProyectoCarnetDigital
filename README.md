@@ -11,7 +11,7 @@ El sistema se organiza en los siguientes microservicios:
 *   **Catalog Service**: Gestiona datos maestros y catálogos, como áreas, carreras, estados y tipos de identificación/usuario.
 *   **User Service**: Administra la información de los usuarios, incluyendo sus fotografías y la generación de códigos QR.
 
-```mermaid
+``` mermaid
 graph TD
     A[Cliente] --> B(API Gateway);
     B --> C(Auth Service);
