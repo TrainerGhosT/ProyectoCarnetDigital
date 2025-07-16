@@ -60,11 +60,8 @@ export class UserController {
   @ApiResponse({ status: 401, description: 'Token inválido' })
   async ObtenerUsuariosFiltrados(@Query() filtros: FiltrarUsuarioDto) {
     const usuarios = await this.userService.getUsers(filtros);
-    return {
-      status: 'success',
-      message: 'Usuarios filtrados obtenidos exitosamente',
-      data: usuarios,
-    };
+    
+    return usuarios
   }
 
   @Post()
@@ -76,11 +73,7 @@ export class UserController {
   async CreateUser(@Body() crearUsuarioDto: CrearUsuarioDto) {
     try {
       const usuario = await this.userService.createUser(crearUsuarioDto);
-      return {
-        status: 'success',
-        message: 'Usuario creado exitosamente',
-        data: usuario,
-      };
+      return usuario;
     } catch (error) {
       if (error.code === 'P2002') {
         throw new HttpException(
