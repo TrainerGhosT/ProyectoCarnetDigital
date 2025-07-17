@@ -43,37 +43,47 @@ export class CarreraController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Obtener lista de carreras' })
-  @SwaggerResponse({ status: 200, description: 'Lista de carreras obtenida' })
-  async findAll() {
-    try {
-      return await this.carreraService.findAll();
-    } catch (error) {
-      throw new HttpException(
-        error.message || 'Error al obtener carreras',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
-      );
-    }
+@ApiOperation({ summary: 'Obtener lista de carreras' })
+@SwaggerResponse({ status: 200, description: 'Lista de carreras obtenida' })
+async findAll() {
+  try {
+    return await this.carreraService.findAll();
+  } catch (error) {
+    throw new HttpException({
+      message: error.message || 'Error al obtener carreras',
+      error: 'Internal Server Error',
+      statusCode: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+    }, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
   }
+}
 
-  @Get(':id')
-  @ApiOperation({ summary: 'Obtener carrera por ID' })
-  @SwaggerResponse({ status: 200, description: 'Carrera encontrada' })
-  @SwaggerResponse({ status: 404, description: 'Carrera no encontrada' })
-  async findOne(@Param('id') id: string) {
-    try {
-      const parsedId = parseInt(id);
-      if (isNaN(parsedId)) {
-        throw new HttpException('ID inválido', HttpStatus.BAD_REQUEST);
-      }
-      return await this.carreraService.findOne(parsedId);
-    } catch (error) {
-      throw new HttpException(
-        error.message || 'Error al obtener carrera',
-        error.status || HttpStatus.INTERNAL_SERVER_ERROR
-      );
+@Get(':id')
+@ApiOperation({ summary: 'Obtener carrera por ID' })
+@SwaggerResponse({ status: 200, description: 'Carrera encontrada' })
+@SwaggerResponse({ status: 404, description: 'Carrera no encontrada' })
+async findOne(@Param('id') id: string) {
+  try {
+    const parsedId = parseInt(id);
+    if (isNaN(parsedId)) {
+      throw new HttpException({
+        message: 'ID inválido',
+        error: 'Bad Request',
+        statusCode: HttpStatus.BAD_REQUEST,
+      }, HttpStatus.BAD_REQUEST);
     }
+
+    return await this.carreraService.findOne(parsedId);
+
+  } catch (error) {
+    throw new HttpException({
+      message: error.message || 'Error al obtener carrera',
+      error: error.error || 'Not Found',
+      statusCode: error.status || HttpStatus.INTERNAL_SERVER_ERROR,
+    }, error.status || HttpStatus.INTERNAL_SERVER_ERROR);
   }
+}
+
+
   @Put(':id')
   @ApiOperation({ summary: 'Modificar carrera por ID' })
   @SwaggerResponse({ status: 200, description: 'Carrera modificada correctamente' })

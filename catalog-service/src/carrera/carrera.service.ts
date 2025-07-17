@@ -34,6 +34,7 @@ export class CarreraService {
 
   async findAll(): Promise<ApiResponse<Carrera[]>> {
     const carreras = await this.prisma.carreras.findMany({ orderBy: { nombre: 'asc' } });
+
     return {
       success: true,
       message: 'Lista de carreras',
@@ -43,12 +44,10 @@ export class CarreraService {
   }
 
   async findOne(id: number): Promise<ApiResponse<Carrera>> {
-    const carrera = await this.prisma.carreras.findUnique({
-      where: { idCarrera: id }
-    });
+    const carrera = await this.prisma.carreras.findUnique({ where: { idCarrera: id }});
 
     if (!carrera) {
-      throw new Error('Carrera no encontrada');
+      throw new NotFoundException('Carrera no encontrada');
     }
 
     return {
