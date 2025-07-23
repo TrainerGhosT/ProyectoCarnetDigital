@@ -39,11 +39,8 @@ export class AuthService {
   private async initRedis() {
     try {
       this.redisClient = createClient({
-        socket: {
-          host: this.configService.get<string>('REDIS_HOST') || 'localhost',
-          port: parseInt(this.configService.get<string>('REDIS_PORT')) || 6379,
-        },
-      });
+        url: this.configService.get<string>('REDIS_URL'),
+      })
       await this.redisClient.connect();
       this.logger.log('Conexión a Redis establecida');
     } catch (error) {
