@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class LoginDto {
@@ -27,4 +27,10 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty({ message: 'El tipo de usuario es requerido' })
   tipoUsuario: string;
+
+
+  @ApiPropertyOptional({ description: 'Intentos fallidos del usuario' })
+  intentos_fallidos?: number;
+
+
 }

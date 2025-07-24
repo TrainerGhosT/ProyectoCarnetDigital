@@ -8,7 +8,7 @@ CREATE TABLE "usuarios" (
     "contrasena" VARCHAR(255) NOT NULL,
     "id_TipoUsuario" INTEGER NOT NULL,
     "id_EstadoUsuario" INTEGER NOT NULL DEFAULT 1,
-    "intentos_fallidos" INTEGER DEFAULT 0,
+    "intentos_fallidos" INTEGER NOT NULL DEFAULT 0,
 
     CONSTRAINT "usuarios_pkey" PRIMARY KEY ("idUsuario","correo")
 );

@@ -13,6 +13,7 @@ import { CarreraModule } from './modules/catalog/carrera/carrera.module';
 import { EstadoModule } from './modules/catalog/estado/estado.module';
 import { TiposIdentificacionModule } from './modules/catalog/tipo-identificacion/tipo-identificacion.module';
 import { TiposUsuarioModule } from './modules/catalog/tipo-usuario/tipo-usuario.module';
+import { BitacoraModule } from './modules/bitacora/bitacora.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TiposUsuarioModule } from './modules/catalog/tipo-usuario/tipo-usuario.
     EstadoModule,
     TiposIdentificacionModule,
     TiposUsuarioModule,
+    BitacoraModule
   ],
 })
 export class AppModule {}

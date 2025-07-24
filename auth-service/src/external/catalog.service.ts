@@ -31,4 +31,36 @@ export class ExternalCatalogService {
       );
     }
   }
+
+  async getEstadoBloqueado() {
+  try {
+    // Obtener todos los estados
+    const response = await firstValueFrom(
+      this.httpService.get(`${this.catalogServiceUrl}/estados`),
+    );
+
+    // Buscar el estado con nombre "bloqueado"
+    const estadoBloqueado = response.data.find(
+      (estado) => estado.nombre.toLowerCase() === 'bloqueado'
+    );
+
+    if (!estadoBloqueado) {
+      throw new HttpException(
+        'Estado bloqueado no encontrado en el catálogo',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    console.log('estadoBloqueado', estadoBloqueado);
+
+    return estadoBloqueado.idEstado;
+  } catch (error) {
+    if (error instanceof HttpException) {
+      throw error;
+    }
+    throw new HttpException(
+      'Error al consultar el servicio de catálogo',
+      HttpStatus.BAD_GATEWAY,
+    );
+  }
+}
 }

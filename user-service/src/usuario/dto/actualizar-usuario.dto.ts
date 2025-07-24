@@ -1,8 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { PartialType } from '@nestjs/mapped-types';
-import { CrearUsuarioDto, TelefonoDto } from './crear-usuario.dto';
+import { TelefonoDto } from './crear-usuario.dto';
+import { IsOptional } from 'class-validator';
 
-export class ActualizarUsuarioDto extends PartialType(CrearUsuarioDto) {
+
+export class ActualizarUsuarioDto  {
   @ApiPropertyOptional({ description: 'Email del usuario' })
   correo?: string;
 
@@ -20,6 +21,14 @@ export class ActualizarUsuarioDto extends PartialType(CrearUsuarioDto) {
 
   @ApiPropertyOptional({ description: 'Tipo de usuario' })
   tipoUsuario?: number;
+
+  @ApiPropertyOptional({ description: 'Estado del usuario' })
+  @IsOptional()
+  estadoUsuario?: number;
+
+  @ApiPropertyOptional({ description: 'Intentos fallidos del usuario' })
+  @IsOptional()
+  intentos_fallidos?: number;
 
   @ApiPropertyOptional({ description: 'IDs de carreras asociadas' })
   carreras?: number[];

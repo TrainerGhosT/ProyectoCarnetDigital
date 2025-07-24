@@ -41,7 +41,7 @@ export class UserService {
       return response.data;
     } catch (error) {
       throw new HttpException(
-        error.response?.data || 'Error al generar QR',
+        error.response?.data || 'Error al actualizar Usuario',
         error.response?.status || 500,
       );
     }

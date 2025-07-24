@@ -53,96 +53,129 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
-    const { correo, contrasena, tipoUsuario } = loginDto;
+  const { correo, contrasena, tipoUsuario } = loginDto;
 
-    try {
-      // 1. Buscar usuario por correo usando el microservicio de usuario
-      const user = await this.externalUserService.findUserByEmail(correo);
-      console.log('user', user);
+  try {
+    // 1. Buscar usuario por correo usando el microservicio de usuario
+    const user = await this.externalUserService.findUserByEmail(correo);
+    console.log('user', user);
 
-      if (!user) {
-        throw new HttpException(
-          'Usuario y/o contraseña incorrectos',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      // 2. Validar contraseña
-      const isPasswordValid = await bcrypt.compare(contrasena, user.contrasena);
-      console.log('password valid: ', isPasswordValid);
-      if (!isPasswordValid) {
-        throw new HttpException(
-          'Usuario y/o contraseña incorrectos',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      // 3. Consultar el nombre del tipo de usuario usando el microservicio de catálogo
-      const tipoUsuarioData =
-        await this.externalCatalogService.getTipoUsuarioById(user.tipoUsuario);
-
-      console.log('tipoUsuarioData', tipoUsuarioData);
-      // 4. Validar que el tipo de usuario coincida
-      if (
-        !tipoUsuarioData ||
-        !tipoUsuarioData.nombre ||
-        tipoUsuarioData.nombre.toLowerCase() !== tipoUsuario.toLowerCase()
-      ) {
-        throw new HttpException(
-          'Usuario y/o contraseña incorrectos',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
-
-      // 5. Validar que el usuario esté activo
-      if (user.estadoUsuario !== 1) {
-        throw new HttpException('Usuario inactivo', HttpStatus.UNAUTHORIZED);
-      }
-
-      // 6. Generar tokens
-      const payload: JwtPayload = {
-        sub: user.idUsuario,
-        email: user.correo,
-        tipoUsuario: tipoUsuarioData.nombre,
-      };
-
-      const accessToken = this.jwtService.sign(payload, {
-        expiresIn: this.jwtExpiresIn,
-      });
-      const decoded: any = this.jwtService.decode(accessToken);
-
-      // Calcula expires_in correctamente
-      const expiresAt = decoded.exp
-        ? new Date(decoded.exp * 1000).toLocaleString('es-CR', {
-            timeZone: 'America/Costa_Rica',
-          })
-        : null;
-
-      const refreshToken = await this.generateRefreshToken(
-        user.idUsuario,
-        user.correo,
-        tipoUsuarioData.nombre,
-      );
-
-      // 7. Calcular tiempo de expiración
-
-      return {
-        expires_in: expiresAt,
-        access_token: accessToken,
-        refresh_token: refreshToken,
-        usuarioID: user.idUsuario,
-      };
-    } catch (error) {
-      if (error instanceof HttpException) {
-        throw error;
-      }
-      this.logger.error('Error en login:', error);
+    if (!user) {
       throw new HttpException(
-        'Error interno del servidor',
-        HttpStatus.INTERNAL_SERVER_ERROR,
+        'Usuario y/o contraseña incorrectos',
+        HttpStatus.UNAUTHORIZED,
       );
     }
+
+    // Verificar si el usuario está bloqueado
+    if (user.estadoUsuario !== 1) {
+      throw new HttpException('Usuario inactivo o bloqueado', HttpStatus.UNAUTHORIZED);
+    }
+
+    // 2. Validar contraseña
+    const isPasswordValid = await bcrypt.compare(contrasena, user.contrasena);
+    console.log('password valid: ', isPasswordValid);
+
+    if (!isPasswordValid) {
+      // Incrementar intentos fallidos en Redis
+      const redisKey = `intentos_fallidos:${correo}`;
+      const intentosFallidos = (await this.redisClient.get(redisKey)) || 0;
+      const nuevosIntentos = parseInt(intentosFallidos) + 1;
+
+      if (nuevosIntentos >= 3) {
+        // Consultar el estado bloqueado desde el catálogo
+        const estadoBloqueado = await this.externalCatalogService.getEstadoBloqueado();
+
+        console.log('estadoBloqueado:', estadoBloqueado);
+        // Actualizar estado del usuario a bloqueado
+        await this.externalUserService.updateUser(user.idUsuario, {
+          intentos_fallidos: nuevosIntentos,
+          estadoUsuario: estadoBloqueado,
+        });
+
+        // Limpiar intentos fallidos en Redis
+        await this.redisClient.del(redisKey);
+
+        throw new HttpException(
+          'Usuario y/o contraseña incorrectos, contacte con el administrador',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      // Actualizar intentos fallidos en Redis
+      await this.redisClient.set(redisKey, nuevosIntentos);
+
+      throw new HttpException(
+        'Usuario y/o contraseña incorrectos',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    // Reiniciar intentos fallidos en Redis si el login es exitoso
+    const redisKey = `intentos_fallidos:${correo}`;
+    await this.redisClient.del(redisKey);
+
+    // 3. Consultar el nombre del tipo de usuario usando el microservicio de catálogo
+    const tipoUsuarioData =
+      await this.externalCatalogService.getTipoUsuarioById(user.tipoUsuario);
+
+    console.log('tipoUsuarioData', tipoUsuarioData);
+
+    // 4. Validar que el tipo de usuario coincida
+    if (
+      !tipoUsuarioData ||
+      !tipoUsuarioData.nombre ||
+      tipoUsuarioData.nombre.toLowerCase() !== tipoUsuario.toLowerCase()
+    ) {
+      throw new HttpException(
+        'Usuario y/o contraseña incorrectos',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+
+    // 5. Generar tokens
+    const payload: JwtPayload = {
+      sub: user.idUsuario,
+      email: user.correo,
+      tipoUsuario: tipoUsuarioData.nombre,
+    };
+
+    const accessToken = this.jwtService.sign(payload, {
+      expiresIn: this.jwtExpiresIn,
+    });
+    const decoded: any = this.jwtService.decode(accessToken);
+
+    // Calcula expires_in correctamente
+    const expiresAt = decoded.exp
+      ? new Date(decoded.exp * 1000).toLocaleString('es-CR', {
+          timeZone: 'America/Costa_Rica',
+        })
+      : null;
+
+    const refreshToken = await this.generateRefreshToken(
+      user.idUsuario,
+      user.correo,
+      tipoUsuarioData.nombre,
+    );
+
+    return {
+      expires_in: expiresAt,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      usuarioID: user.idUsuario,
+    };
+  } catch (error) {
+    if (error instanceof HttpException) {
+      throw error;
+    }
+    this.logger.error('Error en login:', error);
+    throw new HttpException(
+      'Error interno del servidor',
+      HttpStatus.INTERNAL_SERVER_ERROR,
+    );
   }
+}
 
    async refresh(refreshDto: RefreshDto): Promise<Omit<AuthResponse, 'usuarioID'>> {
     const { refresh_token } = refreshDto;

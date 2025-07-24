@@ -30,4 +30,18 @@ export class ExternalUserService {
       );
     }
   }
+
+  async updateUser(id: string, updateData: { intentos_fallidos?: number, estadoUsuario?: number }) {
+  try {
+    const response = await firstValueFrom(
+      this.httpService.put(`${this.userServiceUrl}/usuario/${id}`, updateData),
+    );
+    return response.data;
+  } catch (error) {
+    throw new HttpException(
+      error.response?.data || 'Error al actualizar usuario',
+      error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+    );
+  }
+}
 }

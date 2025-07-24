@@ -23,7 +23,7 @@ model Usuarios {
   contrasena         String @db.VarChar(255)
   tipoUsuario        Int    @map("id_TipoUsuario") @db.Integer()
   estadoUsuario      Int    @default(1) @map("id_EstadoUsuario") @db.Integer()
-  intentos_fallidos  Int?    @default(0)
+  intentos_fallidos  Int   @default(0) @db.Integer()
 
   carreras UsuarioCarreras[]
 
@@ -96,10 +96,10 @@ model UsuarioQr {
   @@map("usuario_qr")
 }
 
-model Bitacora { 
-  idBitacora Int @id @default(autoincrement())
-  usuario String @map("id_Usuario") @db.Uuid
-  descripcion Json @db.Json
+model Bitacora {
+  idBitacora  Int    @id @default(autoincrement())
+  usuario     String @map("id_Usuario") @db.Uuid
+  descripcion Json   @db.Json
 
   @@map("bitacora")
 }
