@@ -94,7 +94,7 @@ export class UserService {
   async updateStateUser(id: string, dto: CambiarEstadoUsuarioDto) {
     try {
       const response = await firstValueFrom(
-        this.httpService.put(
+        this.httpService.patch(
           `${this.userServiceUrl}/usuario/estado/${id}`,
           dto,
         ),

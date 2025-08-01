@@ -23,17 +23,26 @@ export class EstadoUsuarioService {
 
   async cambiarEstadoUsuario(id: string, dto: CambiarEstadoUsuarioDto) {
     try {
-      // validar usuaurio existente
-
       const usuario = await this.obtenerUsuario(id);
 
-      // validar estado existente en catalog-service
       await this.obtenerEstado(dto);
 
-      // Actualizar estado
+      // Obtener el estado bloqueado desde el catálogo
+      const estadoBloqueado = await this.obtenerEstadoBloqueado();
+
+      const dataActualizar: any = { estadoUsuario: dto.codigoEstado };
+
+      // Si el usuario está bloqueado y se cambia a un estado diferente, reiniciar intentos fallidos
+      if (
+        usuario.estadoUsuario === estadoBloqueado &&
+        dto.codigoEstado !== estadoBloqueado
+      ) {
+        dataActualizar.intentos_fallidos = 0;
+      }
+
       const usuarioActualizado = await this.prisma.usuarios.update({
         where: { idUsuario: id },
-        data: { estadoUsuario: dto.codigoEstado },
+        data: dataActualizar,
       });
 
       return {
@@ -50,12 +59,10 @@ export class EstadoUsuarioService {
     }
   }
 
-  // obtener usuario con prisma
-
-  async obtenerUsuario(id) {
+  async obtenerUsuario(id: string) {
     const queryUsuario = await this.prisma.usuarios.findUnique({
       where: { idUsuario: id },
-      select: { idUsuario: true, estadoUsuario: true },
+      select: { idUsuario: true, estadoUsuario: true, intentos_fallidos: true },
     });
 
     if (!queryUsuario) {
@@ -64,17 +71,37 @@ export class EstadoUsuarioService {
     return queryUsuario;
   }
 
-  // obtener estado de catalog service
-
   async obtenerEstado(dto: CambiarEstadoUsuarioDto) {
     try {
       await firstValueFrom(
-        this.httpService.get(
-          `${this.catalogServiceUrl}/estados/${dto.codigoEstado}`,
-        ),
+        this.httpService.get(`${this.catalogServiceUrl}/estados/${dto.codigoEstado}`),
       );
     } catch (error) {
       throw new HttpException('Estado no encontrado', HttpStatus.NOT_FOUND);
+    }
+  }
+
+  //  método para obtener el estado bloqueado
+  async obtenerEstadoBloqueado(): Promise<number> {
+    try {
+      const response = await firstValueFrom(
+        this.httpService.get(`${this.catalogServiceUrl}/estados`),
+      );
+      const estadoBloqueado = response.data.find(
+        (estado) => estado.nombre.toLowerCase() === 'bloqueado',
+      );
+      if (!estadoBloqueado) {
+        throw new HttpException(
+          'Estado bloqueado no encontrado en el catálogo',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+      return estadoBloqueado.idEstado;
+    } catch (error) {
+      throw new HttpException(
+        'Error al consultar el servicio de catálogo',
+        HttpStatus.BAD_GATEWAY,
+      );
     }
   }
 }

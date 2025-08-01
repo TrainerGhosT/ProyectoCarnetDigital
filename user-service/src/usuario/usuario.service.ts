@@ -459,7 +459,7 @@ export class UsuarioService {
         try {
           for (const areaId of areas) {
             await firstValueFrom(
-              this.httpService.get(`${this.catalogServiceUrl}/areas/${areaId}`),
+              this.httpService.get(`${this.catalogServiceUrl}/area/${areaId}`),
             );
           }
         } catch (error) {
@@ -503,7 +503,7 @@ export class UsuarioService {
       try {
         for (const areaId of areas) {
           await firstValueFrom(
-            this.httpService.get(`${this.catalogServiceUrl}/areas/${areaId}`),
+            this.httpService.get(`${this.catalogServiceUrl}/area/${areaId}`),
           );
         }
       } catch (error) {
