@@ -6,6 +6,7 @@ import * as QRCode from 'qrcode';
 import { PrismaService } from 'src/common/prisma.service';
 
 interface QrData {
+  idUsuario: string;
   nombreCompleto: string;
   identificacion: string;
   tipoUsuario: string;
@@ -77,6 +78,7 @@ export class QrService {
 
     // 5. Armar datos para QR
     const qrData: QrData = {
+      idUsuario: user.idUsuario,
       nombreCompleto: user.nombreCompleto,
       identificacion: user.identificacion,
       tipoUsuario: tipoUsuarioDesc,
