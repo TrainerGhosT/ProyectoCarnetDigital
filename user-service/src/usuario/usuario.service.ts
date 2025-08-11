@@ -5,7 +5,7 @@ import { PrismaService } from '../common/prisma.service';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
 import { FiltrarUsuarioDto } from './dto/filtrar-usuario.dto';
-import * as bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
@@ -382,7 +382,7 @@ export class UsuarioService {
 
   private async encriptarContrasena(contrasena: string): Promise<string> {
     const saltRounds = this.configService.get<number>('SALT_ROUNDS') || 10;
-    return await bcrypt.hash(contrasena, saltRounds);
+    return await bcrypt.hash(contrasena, saltRounds); 
   }
 
   private async validarTiposEnCatalog(

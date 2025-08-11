@@ -12,7 +12,8 @@ import {
   EliminarFotografiaDto,
   ObtenerFotografiaDto,
 } from './dto/fotografia-usuario.dto';
-import { fromBuffer } from 'file-type';
+import fileType from 'file-type';
+
 
 
 @Injectable()
@@ -137,7 +138,7 @@ export class FotografiaUsuarioService {
       payload = input;
       // Decodificamos los primeros bytes para detectar el tipo
       const buf = Buffer.from(payload, 'base64');
-      const ft = await fromBuffer(buf);
+      const ft = await fileType.fileTypeFromBuffer(buf);
       if (!ft || !ft.mime.startsWith('image/')) {
         throw new BadRequestException(
           'No se pudo inferir el tipo de imagen. Asegúrate de enviar un Base64 válido de imagen',
