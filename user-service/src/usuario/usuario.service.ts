@@ -5,7 +5,8 @@ import { PrismaService } from '../common/prisma.service';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
 import { FiltrarUsuarioDto } from './dto/filtrar-usuario.dto';
-import bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
+
 import { firstValueFrom } from 'rxjs';
 
 @Injectable()
