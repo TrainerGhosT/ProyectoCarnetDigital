@@ -85,7 +85,7 @@ export class UserController {
     }
   }
 
-  @Get(':usuarioId')
+  @Get('fotografia/:usuarioId')
   @ApiOperation({
     summary: 'Obtener fotografía del usuario',
     description:

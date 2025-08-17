@@ -17,7 +17,7 @@ export class ActualizarFotografiaDto {
   })
   @IsString()
   @IsNotEmpty({ message: 'La fotografía es requerida' })
-  @IsBase64()
+
   
   fotografia: string;
 }

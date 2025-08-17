@@ -69,7 +69,7 @@ export class UserService {
       return response.data;
     } catch (error) {
       throw new HttpException(
-        'Error al agregar o actualizar usuario',
+        'Error al agregar o actualizar fotografia',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
