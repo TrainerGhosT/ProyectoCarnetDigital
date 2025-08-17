@@ -18,7 +18,7 @@ export class ActualizarFotografiaDto {
   @IsString()
   @IsNotEmpty({ message: 'La fotografía es requerida' })
   @IsBase64()
-  @MaxLength(1_400_000, { message: 'La fotografía no debe superar 1 MB' })
+  
   fotografia: string;
 }
 

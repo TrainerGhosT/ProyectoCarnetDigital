@@ -8,6 +8,7 @@ import {
   ParseUUIDPipe,
   Patch,
   UseGuards,
+  Post,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -23,6 +24,7 @@ import {
   EstadoUsuarioResponseDto,
 } from './dto/estado-usuario.dto';
 import { JwtAuthGuard } from 'src/config/jwt-auth.guard';
+import { ActualizarFotografiaDto } from './dto/fotografia-usuario.dto';
 
 @ApiTags('Usuario')
 @ApiBearerAuth()
@@ -81,5 +83,32 @@ export class UserController {
     const estadoUsuario = await this.userService.updateStateUser(id, dto);
 
     return estadoUsuario;
+  }
+
+  @Post('fotografia')
+  @ApiOperation({ summary: 'Crear fotografia de un usuario' })
+  @ApiResponse({ status: 200, description: 'Fotografia creada exitosamente' })
+  @ApiResponse({ status: 404, description: 'Fotofrafia no encontrada' })
+  @ApiResponse({ status: 401, description: 'Token inválido' })
+  async crearFotografiaUsuario(
+    @Body() actualizarFotografiaDto: ActualizarFotografiaDto,
+  ) {
+    const data = await this.userService.updatePhoto(actualizarFotografiaDto);
+
+    return data;
+  }
+
+  @Delete('fotografia/:id')
+  @ApiOperation({ summary: 'Eliminar fotografia de un usuario' })
+  @ApiResponse({
+    status: 200,
+    description: 'Fotografía eliminada exitosamente',
+  })
+  @ApiResponse({ status: 404, description: 'Fotografía no encontrada' })
+  @ApiResponse({ status: 401, description: 'Token inválido' })
+  async eliminarFotografiaUsuario(@Param('id', ParseUUIDPipe) id: string) {
+    const data = await this.userService.deletePhoto(id);
+
+    return data;
   }
 }

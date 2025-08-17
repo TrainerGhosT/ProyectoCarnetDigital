@@ -4,6 +4,8 @@ import {
   NotFoundException,
   BadRequestException,
   Logger,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { PrismaService } from 'src/common/prisma.service';
 import {
@@ -154,7 +156,8 @@ export class FotografiaUsuarioService {
       );
     }
     if (payload.length > 1_400_000) {
-      throw new BadRequestException('La fotografía no debe superar 1 MB');
+      throw new HttpException('La fotografía no debe superar 1 MB', HttpStatus.PAYLOAD_TOO_LARGE);
+
     }
 
     // Reconstruimos siempre con el prefijo estándar
